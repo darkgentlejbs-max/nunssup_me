@@ -569,7 +569,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <button
                   type="submit"
                   disabled={!agreeDeposit || !name.trim() || !phone.trim()}
-                  className="flex-1 py-3.5 bg-gradient-to-r from-brand-900 to-brand-800 hover:from-brand-950 hover:to-brand-900 disabled:opacity-50 text-gold-300 font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2"
+                  className="flex-1 py-3.5 bg-[#DF9A8C] hover:bg-[#D18475] disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>예약 신청 완료하기</span>
@@ -581,7 +581,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           {/* STEP 4: CONFIRMATION TICKET & VIRTUAL NOTIFICATION */}
           {step === 4 && confirmedApt && (
             <div className="space-y-5 text-center">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto ring-8 ring-emerald-50 animate-bounce">
+              <div className="w-16 h-16 rounded-full bg-[#faeee9] text-[#DF9A8C] flex items-center justify-center mx-auto ring-8 ring-[#fdf7f5] animate-bounce">
                 <CheckCircle className="w-10 h-10" />
               </div>
 
@@ -598,34 +598,34 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <div className="card-frame bg-brand-900 text-white p-5 text-left rounded-2xl shadow-xl space-y-3">
                 <div className="flex items-center justify-between border-b border-brand-700/80 pb-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-serif-kr text-base font-bold text-gold-300">눈썹 : 미 眉</span>
-                    <span className="text-[10px] text-stone-400 font-mono">RESERVATION TICKET</span>
+                    <span className="font-serif-kr text-base font-bold text-brand-100">눈썹 : 미 眉</span>
+                    <span className="text-[10px] text-brand-300 font-mono">RESERVATION TICKET</span>
                   </div>
-                  <span className="text-[11px] px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded border border-amber-400/30">
+                  <span className="text-[11px] px-2 py-0.5 bg-[#DF9A8C]/30 text-[#f5dad3] rounded border border-[#DF9A8C]/50 font-bold">
                     대기 중
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <span className="text-stone-400 text-[11px]">예약자명</span>
+                    <span className="text-stone-300 text-[11px]">예약자명</span>
                     <p className="font-bold text-white text-sm">{confirmedApt.customerName} 님</p>
                   </div>
                   <div>
-                    <span className="text-stone-400 text-[11px]">연락처</span>
+                    <span className="text-stone-300 text-[11px]">연락처</span>
                     <p className="font-mono text-stone-200">{confirmedApt.customerPhone}</p>
                   </div>
                   <div>
-                    <span className="text-stone-400 text-[11px]">시술 프로그램</span>
-                    <p className="font-bold text-gold-300">{confirmedApt.serviceName}</p>
+                    <span className="text-stone-300 text-[11px]">시술 프로그램</span>
+                    <p className="font-bold text-brand-200">{confirmedApt.serviceName}</p>
                   </div>
                   <div>
-                    <span className="text-stone-400 text-[11px]">시술 시간</span>
+                    <span className="text-stone-300 text-[11px]">시술 시간</span>
                     <p className="text-stone-200">약 {confirmedApt.durationMinutes}분 소요</p>
                   </div>
-                  <div className="col-span-2 bg-brand-950/60 p-2 rounded-lg border border-brand-800">
-                    <span className="text-stone-400 text-[11px]">예약 일시</span>
-                    <p className="font-bold text-gold-300 text-sm">
+                  <div className="col-span-2 bg-brand-950/60 p-2.5 rounded-lg border border-brand-800">
+                    <span className="text-stone-300 text-[11px]">예약 일시</span>
+                    <p className="font-bold text-brand-100 text-sm">
                       {formatKoreanDate(confirmedApt.date)} {confirmedApt.time}
                     </p>
                   </div>
@@ -645,14 +645,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     handleResetAndClose();
                     if (onSuccessLookup) onSuccessLookup();
                   }}
-                  className="flex-1 py-3 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold rounded-xl transition-all"
+                  className="flex-1 py-3 bg-[#FAF5EE] hover:bg-[#F2EBD9] text-[#3E2C1E] text-xs font-bold rounded-xl transition-all border border-[#D9C4AD]"
                 >
                   내 예약 목록 확인하기
                 </button>
                 <button
                   type="button"
                   onClick={handleResetAndClose}
-                  className="flex-1 py-3 bg-brand-900 hover:bg-brand-800 text-gold-300 text-xs font-bold rounded-xl transition-all shadow-md"
+                  className="flex-1 py-3 bg-[#3E2C1E] hover:bg-[#DF9A8C] text-white text-xs font-bold rounded-xl transition-all shadow-md"
                 >
                   확인 완료
                 </button>

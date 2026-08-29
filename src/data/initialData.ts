@@ -2,15 +2,15 @@ import { ShopConfig, ServiceItem, Customer, Appointment, TimeBlock } from '../ty
 
 export const initialShopConfig: ShopConfig = {
   name: '눈썹 : 미 眉',
-  subtitle: 'nunssup_me',
+  subtitle: 'LASH & BROW',
   instagram: '@nunssup_me',
   phone: '010.3797.7721',
   address: '전남광주통합특별시 여수시 문수로 148, 1층(문수동)',
-  weekdayHours: { start: '10:00', end: '19:00' }, // 월-목 10:00 ~ 19:00
-  weekendHours: { start: '10:00', end: '21:00' }, // 금-토 10:00 ~ 21:00
-  closedDays: [0], // 0 = 일요일 휴무
+  weekdayHours: { start: '10:30', end: '19:00' }, // 월-수 10:30 ~ 19:00
+  weekendHours: { start: '10:30', end: '21:00' }, // 목-토 10:30 ~ 21:00
+  closedDays: [0], // 0 = 일요일 휴무 (일요일은 쉬어요:))
   slotIntervalMinutes: 30,
-  notice: '100% 예약제 운영 중입니다. 당일 예약 및 상담 문의는 부재 시 문자를 남겨주시면 시술 후 순차적으로 연락드립니다.',
+  notice: '100% 예약제 운영중 입니다. 부재 시 문자 남겨주세요 :)',
   depositAmount: 20000,
   bankInfo: '카카오뱅크 3333-01-2345678 (예금주: 눈썹미)',
   adminPin: '7721', // 전화번호 뒷 4자리

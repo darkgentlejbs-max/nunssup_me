@@ -47,12 +47,12 @@ export const MyBookingLookupModal: React.FC<MyBookingLookupModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2 text-gold-300 text-xs font-semibold uppercase tracking-wider mb-1">
-            <Calendar className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 text-brand-200 text-xs font-semibold uppercase tracking-wider mb-1">
+            <Calendar className="w-3.5 h-3.5 text-[#DF9A8C]" />
             <span>눈썹 : 미 眉</span>
           </div>
           <h2 className="text-xl font-bold font-serif-kr">내 예약 내역 조회 및 관리</h2>
-          <p className="text-xs text-stone-300 mt-1">
+          <p className="text-xs text-brand-200/80 mt-1">
             예약 시 입력하신 휴대폰 번호로 예약 현황을 조회하실 수 있습니다.
           </p>
         </div>
@@ -70,12 +70,12 @@ export const MyBookingLookupModal: React.FC<MyBookingLookupModalProps> = ({
                   setPhoneQuery(formatPhoneNumber(e.target.value));
                   setHasSearched(false);
                 }}
-                className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-800"
+                className="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0] border border-[#EBDCD0] rounded-xl text-sm font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#DF9A8C]"
               />
             </div>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-brand-900 hover:bg-brand-800 text-gold-300 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-sm"
+              className="px-5 py-2.5 bg-[#3E2C1E] hover:bg-[#DF9A8C] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-sm"
             >
               <Search className="w-4 h-4" />
               <span>조회</span>

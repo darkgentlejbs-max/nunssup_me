@@ -294,13 +294,13 @@ export const ScheduleCalendar: React.FC = () => {
 
         {/* View Switcher & Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap justify-end w-full md:w-auto">
-          <div className="flex bg-stone-100 p-1 rounded-xl">
+          <div className="flex bg-[#FAF5EE] p-1 rounded-xl border border-[#E8DBCA]">
             <button
               onClick={() => setCalendarView('daily')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 calendarView === 'daily'
-                  ? 'bg-brand-900 text-white shadow-sm'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-[#3E2C1E] text-white shadow-sm'
+                  : 'text-[#6E5341] hover:text-[#3E2C1E]'
               }`}
             >
               일간 타임테이블
@@ -309,8 +309,8 @@ export const ScheduleCalendar: React.FC = () => {
               onClick={() => setCalendarView('weekly')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 calendarView === 'weekly'
-                  ? 'bg-brand-900 text-white shadow-sm'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-[#3E2C1E] text-white shadow-sm'
+                  : 'text-[#6E5341] hover:text-[#3E2C1E]'
               }`}
             >
               주간 뷰
@@ -319,8 +319,8 @@ export const ScheduleCalendar: React.FC = () => {
               onClick={() => setCalendarView('monthly')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 calendarView === 'monthly'
-                  ? 'bg-brand-900 text-white shadow-sm'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-[#3E2C1E] text-white shadow-sm'
+                  : 'text-[#6E5341] hover:text-[#3E2C1E]'
               }`}
             >
               월간 뷰
@@ -329,8 +329,8 @@ export const ScheduleCalendar: React.FC = () => {
               onClick={() => setCalendarView('list')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 calendarView === 'list'
-                  ? 'bg-brand-900 text-white shadow-sm'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-[#3E2C1E] text-white shadow-sm'
+                  : 'text-[#6E5341] hover:text-[#3E2C1E]'
               }`}
             >
               목록 뷰
@@ -342,9 +342,9 @@ export const ScheduleCalendar: React.FC = () => {
               setBlockDate(selectedDate);
               setIsBlockModalOpen(true);
             }}
-            className="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+            className="px-3 py-2 bg-[#FAF5EE] hover:bg-[#F2EBD9] text-[#4A3728] border border-[#E8DBCA] rounded-xl text-xs font-bold transition-all flex items-center gap-1"
           >
-            <Ban className="w-3.5 h-3.5 text-stone-500" />
+            <Ban className="w-3.5 h-3.5 text-[#8E6C51]" />
             <span>일정 차단</span>
           </button>
 
@@ -353,7 +353,7 @@ export const ScheduleCalendar: React.FC = () => {
               setNewDate(selectedDate);
               setIsAddModalOpen(true);
             }}
-            className="px-4 py-2 bg-brand-900 hover:bg-brand-800 text-gold-300 hover:text-white rounded-xl text-xs font-bold transition-all shadow flex items-center gap-1.5"
+            className="px-4 py-2 bg-[#DF9A8C] hover:bg-[#D18475] text-white rounded-xl text-xs font-bold transition-all shadow flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
             <span>예약 직접 등록</span>

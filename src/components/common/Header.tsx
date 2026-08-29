@@ -47,7 +47,7 @@ export const Header: React.FC = () => {
             <div className="flex items-center gap-4 text-stone-300 text-[11px]">
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-gold-400" />
-                월-목 {shopConfig.weekdayHours.start}~{shopConfig.weekdayHours.end} | 금-토 {shopConfig.weekendHours.start}~{shopConfig.weekendHours.end} (일 휴무)
+                월-수 {shopConfig.weekdayHours.start}~{shopConfig.weekdayHours.end} | 목-토 {shopConfig.weekendHours.start}~{shopConfig.weekendHours.end} (일 휴무)
               </span>
               <a
                 href={`tel:${shopConfig.phone}`}
@@ -64,19 +64,19 @@ export const Header: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-800 to-brand-950 border border-gold-400/40 flex items-center justify-center shadow-inner">
-              <span className="font-serif-kr text-xl font-bold text-gold-300">眉</span>
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-800 to-brand-950 border border-brand-500/40 flex items-center justify-center shadow-inner">
+              <span className="font-serif-kr text-xl font-bold text-brand-100">眉</span>
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-serif-kr text-lg sm:text-xl font-bold tracking-wider text-white">
-                  눈썹 : 미 <span className="text-gold-300 font-normal">:</span> <span className="text-gold-300 font-serif-kr">眉</span>
+                  눈썹 : 미 <span className="text-brand-300 font-normal">:</span> <span className="text-brand-200 font-serif-kr">眉</span>
                 </h1>
-                <span className="text-xs text-gold-400 font-mono tracking-widest hidden xs:inline">
-                  nunssup_me
+                <span className="text-[11px] px-1.5 py-0.5 rounded bg-brand-800/80 text-brand-200 font-mono tracking-wider hidden xs:inline border border-brand-700/60 font-semibold">
+                  LASH & BROW
                 </span>
               </div>
-              <p className="text-[11px] text-stone-400 -mt-0.5">
+              <p className="text-[11px] text-brand-200/80 -mt-0.5">
                 프리미엄 1:1 맞춤 반영구 & 속눈썹 스튜디오
               </p>
             </div>

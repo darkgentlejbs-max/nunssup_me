@@ -86,6 +86,7 @@ export const ShopSettings: React.FC = () => {
   const [weekdayEnd, setWeekdayEnd] = useState(shopConfig.weekdayHours.end);
   const [weekendStart, setWeekendStart] = useState(shopConfig.weekendHours.start);
   const [weekendEnd, setWeekendEnd] = useState(shopConfig.weekendHours.end);
+  const [closedDays, setClosedDays] = useState<number[]>(shopConfig.closedDays || [0]);
 
   // PIN Change Form
   const [oldPin, setOldPin] = useState('');
@@ -188,6 +189,7 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
       notice,
       weekdayHours: { start: weekdayStart, end: weekdayEnd },
       weekendHours: { start: weekendStart, end: weekendEnd },
+      closedDays,
     });
   };
 
@@ -289,7 +291,7 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
           </div>
           <button
             type="submit"
-            className="px-5 py-2.5 bg-brand-900 hover:bg-brand-800 text-gold-300 font-bold rounded-xl text-xs shadow transition-all"
+            className="px-5 py-2.5 bg-[#DF9A8C] hover:bg-[#D18475] text-white font-bold rounded-xl text-xs shadow transition-all"
           >
             변경사항 저장
           </button>
@@ -405,9 +407,37 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
               </div>
             </div>
           </div>
-
-          <div className="text-xs font-bold text-rose-600 flex items-center gap-2">
-            <span>* 일요일 정기 휴무 (예약 시스템 자동 차단 적용 중)</span>
+          {/* Closed Days UI */}
+          <div className="pt-2 border-t border-stone-200">
+            <span className="font-bold text-stone-800 block text-xs mb-2">매주 정기 휴무일 선택 (다중 선택 가능)</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => {
+                const isSelected = closedDays.includes(idx);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setClosedDays(closedDays.filter(d => d !== idx));
+                      } else {
+                        setClosedDays([...closedDays, idx].sort());
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      isSelected 
+                        ? 'bg-rose-50 text-rose-600 border border-rose-200 shadow-sm'
+                        : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-stone-500 mt-2">
+              * 선택한 요일은 고객 예약창에서 자동으로 예약이 차단됩니다.
+            </p>
           </div>
         </div>
       </form>

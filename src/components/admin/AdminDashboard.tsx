@@ -41,7 +41,7 @@ export const AdminDashboard: React.FC = () => {
   const todaySales = todayCompleted.reduce((sum, a) => sum + a.price, 0);
 
   return (
-    <div className="min-h-screen bg-stone-100/60 pb-20">
+    <div className="min-h-screen bg-[#faf7f2] pb-20">
       {/* 1. TOP OWNER HEADER */}
       <div className="bg-brand-900 text-white border-b border-brand-800 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto space-y-6">
@@ -193,7 +193,7 @@ export const AdminDashboard: React.FC = () => {
               onClick={() => setActiveTab('calendar')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'calendar'
-                  ? 'bg-stone-100 text-brand-900 shadow-sm border-t-2 border-gold-400'
+                  ? 'bg-[#faf7f2] text-brand-900 shadow-sm border-t-2 border-[#DF9A8C]'
                   : 'text-stone-300 hover:text-white hover:bg-brand-800/60'
               }`}
             >
@@ -208,7 +208,7 @@ export const AdminDashboard: React.FC = () => {
               onClick={() => setActiveTab('customers')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'customers'
-                  ? 'bg-stone-100 text-brand-900 shadow-sm border-t-2 border-gold-400'
+                  ? 'bg-[#faf7f2] text-brand-900 shadow-sm border-t-2 border-[#DF9A8C]'
                   : 'text-stone-300 hover:text-white hover:bg-brand-800/60'
               }`}
             >
@@ -223,7 +223,7 @@ export const AdminDashboard: React.FC = () => {
               onClick={() => setActiveTab('analytics')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'analytics'
-                  ? 'bg-stone-100 text-brand-900 shadow-sm border-t-2 border-gold-400'
+                  ? 'bg-[#faf7f2] text-brand-900 shadow-sm border-t-2 border-[#DF9A8C]'
                   : 'text-stone-300 hover:text-white hover:bg-brand-800/60'
               }`}
             >
@@ -235,7 +235,7 @@ export const AdminDashboard: React.FC = () => {
               onClick={() => setActiveTab('settings')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'settings'
-                  ? 'bg-stone-100 text-brand-900 shadow-sm border-t-2 border-gold-400'
+                  ? 'bg-[#faf7f2] text-brand-900 shadow-sm border-t-2 border-[#DF9A8C]'
                   : 'text-stone-300 hover:text-white hover:bg-brand-800/60'
               }`}
             >

@@ -18,12 +18,12 @@ export const MainAppContent: React.FC = () => {
   const { layoutMode } = useLayoutMode();
 
   return (
-    <div className="min-h-screen bg-stone-100 flex flex-col selection:bg-brand-800 selection:text-gold-300">
+    <div className="min-h-screen bg-[#faf7f2] flex flex-col selection:bg-brand-800 selection:text-gold-300">
       <Header />
-      <main className="flex-1 flex justify-center">
+      <main className="flex-1 flex justify-center bg-[#faf7f2]">
         <div
           className={`w-full transition-all duration-300 ${
-            layoutMode === 'mobile' ? 'max-w-[430px] shadow-2xl bg-stone-100' : ''
+            layoutMode === 'mobile' ? 'max-w-[430px] shadow-2xl bg-[#faf7f2] border-x border-[#e8dfd3]' : ''
           }`}
         >
           {viewMode === 'customer' ? <CustomerHome /> : <AdminDashboard />}

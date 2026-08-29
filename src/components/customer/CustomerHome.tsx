@@ -41,125 +41,112 @@ export const CustomerHome: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100/60 pb-20">
-      {/* 1. HERO SECTION: Vintage Emerald Business Card Replica */}
-      <section className="bg-gradient-to-b from-brand-900 via-brand-900 to-brand-950 text-white pt-10 pb-16 px-4 relative overflow-hidden">
-        {/* Subtle decorative glow */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-700/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 -right-24 w-96 h-96 bg-gold-600/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="max-w-5xl mx-auto">
-          {/* Main Luxury Business Card Banner */}
-          <div className="relative mx-auto max-w-3xl rounded-3xl p-6 sm:p-10 border-2 border-gold-300/60 shadow-2xl bg-gradient-to-br from-brand-900 to-brand-950 backdrop-blur-md">
-            {/* Ornamental Inner Border */}
-            <div className="absolute inset-2 border border-gold-400/25 rounded-2xl pointer-events-none" />
-
-            {/* Business Card Header Title */}
-            <div className="text-center mb-8 relative z-10">
-              <div className="inline-block px-8 py-3 rounded-2xl border-2 border-white/80 shadow-sm bg-brand-950/40 backdrop-blur">
-                <h1 className="text-2xl sm:text-4xl font-extrabold font-serif-kr tracking-widest text-white">
-                  눈 썹 <span className="text-gold-300 font-normal">:</span> 미{' '}
-                  <span className="text-gold-300 font-serif-kr font-bold text-3xl sm:text-5xl ml-1">眉</span>
+    <div className="min-h-screen bg-[#faf7f2] pb-20">
+      {/* 1. HERO SECTION: Exact Replica of the new LASH&BROW Brand Design */}
+      <section className="pt-6 pb-12 px-4 relative overflow-hidden bg-gradient-to-b from-[#FAF4EC] via-[#FAF6F0] to-[#FAF7F2]">
+        <div className="max-w-3xl mx-auto">
+          {/* Main Brand Card */}
+          <div className="relative rounded-3xl p-6 sm:p-12 border-2 border-[#E5D7C7] shadow-xl bg-[#FFFDF9]/95 backdrop-blur-sm">
+            
+            {/* 1) Main Brand Logo Box */}
+            <div className="text-center mb-8">
+              <div className="inline-block px-10 py-5 border-2 border-[#543D2B] bg-[#FFFDF9] shadow-sm rounded-sm">
+                <h1 className="text-3xl sm:text-5xl font-bold font-dodum tracking-widest text-[#3E2C1E]">
+                  눈썹 <span className="font-normal">:</span> 미<span className="ml-1 font-serif-kr">眉</span>
                 </h1>
-                <p className="text-xs sm:text-sm font-mono tracking-widest text-gold-300 mt-1 font-semibold">
-                  {shopConfig.subtitle}
+                <div className="w-12 h-0.5 bg-[#543D2B] mx-auto my-2 opacity-60" />
+                <p className="text-xs sm:text-sm font-mono tracking-[0.35em] text-[#6E5341] font-bold uppercase">
+                  LASH & BROW
                 </p>
               </div>
             </div>
 
-            {/* Business Card Two-Column Content (Exact copy of image) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center border-t border-brand-800/80 pt-6 relative z-10">
-              {/* Left Column: Operating Hours */}
-              <div className="space-y-4 text-center md:text-left md:border-r md:border-brand-800/80 md:pr-6">
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold text-white tracking-wider flex items-center justify-center md:justify-start gap-2">
-                    <Clock className="w-5 h-5 text-gold-400" />
-                    <span>영 업 시 간</span>
-                  </h3>
-                </div>
+            {/* Dashed Separator 1 */}
+            <div className="my-6 border-b-2 border-dashed border-[#D9C4AD] opacity-70" />
 
-                <div className="space-y-2 text-sm sm:text-base font-medium text-stone-200">
-                  <div className="flex items-center justify-between sm:justify-start sm:gap-6 bg-brand-950/50 p-2.5 rounded-xl border border-brand-800">
-                    <span className="font-bold text-gold-300">월 - 목</span>
-                    <span className="font-mono">AM 10시 ~ PM 7시</span>
-                  </div>
-                  <div className="flex items-center justify-between sm:justify-start sm:gap-6 bg-brand-950/50 p-2.5 rounded-xl border border-brand-800">
-                    <span className="font-bold text-gold-300">금 - 토</span>
-                    <span className="font-mono">AM 10시 ~ PM 9시</span>
-                  </div>
+            {/* 2) Open / Closed Status & Operating Hours */}
+            <div className="space-y-4 max-w-lg mx-auto">
+              {/* Header Badges */}
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="py-1.5 px-4 bg-[#DF9A8C] text-white rounded-md text-xs sm:text-sm font-bold tracking-widest shadow-sm">
+                  O P E N
                 </div>
-
-                <div className="text-center md:text-left">
-                  <span className="inline-block text-gold-400 font-bold text-xs sm:text-sm tracking-widest">
-                    * 일요일 휴무 *
-                  </span>
-                </div>
-
-                <div className="pt-2">
-                  <a
-                    href={`tel:${shopConfig.phone}`}
-                    className="inline-flex items-center gap-2 text-lg sm:text-2xl font-extrabold font-mono tracking-wider text-white hover:text-gold-300 transition-colors"
-                  >
-                    <Phone className="w-5 h-5 text-gold-400" />
-                    <span>{shopConfig.phone}</span>
-                  </a>
+                <div className="py-1.5 px-4 bg-[#BEB2B3] text-white rounded-md text-xs sm:text-sm font-bold tracking-widest shadow-sm">
+                  C L O S E D
                 </div>
               </div>
 
-              {/* Right Column: Menu Items & Notices */}
-              <div className="space-y-4 text-center md:text-left">
-                <div className="grid grid-cols-2 gap-3 text-sm sm:text-base font-bold text-stone-100">
-                  <div className="flex items-center justify-center md:justify-start gap-2 p-2 rounded-lg bg-brand-950/40 border border-brand-800/60">
-                    <span className="text-gold-400">✦</span>
-                    <span>여자눈썹</span>
-                  </div>
-                  <div className="flex items-center justify-center md:justify-start gap-2 p-2 rounded-lg bg-brand-950/40 border border-brand-800/60">
-                    <span className="text-gold-400">✦</span>
-                    <span>남자눈썹</span>
-                  </div>
-                  <div className="flex items-center justify-center md:justify-start gap-2 p-2 rounded-lg bg-brand-950/40 border border-brand-800/60">
-                    <span className="text-gold-400">✦</span>
-                    <span>아이라인</span>
-                  </div>
-                  <div className="flex items-center justify-center md:justify-start gap-2 p-2 rounded-lg bg-brand-950/40 border border-brand-800/60">
-                    <span className="text-gold-400">✦</span>
-                    <span>입술</span>
-                  </div>
-                  <div className="flex items-center justify-center md:justify-start gap-2 p-2 rounded-lg bg-brand-950/40 border border-brand-800/60">
-                    <span className="text-gold-400">✦</span>
-                    <span>미인점</span>
-                  </div>
-                  <div className="flex items-center justify-center md:justify-start gap-2 p-2 rounded-lg bg-brand-950/40 border border-brand-800/60">
-                    <span className="text-gold-400">✦</span>
-                    <span>속눈썹 연장/펌</span>
-                  </div>
+              {/* Hours Rows */}
+              <div className="space-y-2.5 pt-2 text-sm sm:text-base font-semibold text-[#4A3728]">
+                <div className="flex items-center justify-between px-2 sm:px-6">
+                  <span className="font-bold text-[#3E2C1E]">월 - 목</span>
+                  <span className="font-mono text-[#543D2B]">{shopConfig.weekdayHours?.start || '10:30'}</span>
+                  <span className="font-mono text-[#543D2B]">{shopConfig.weekdayHours?.end || '19:00'}</span>
                 </div>
-
-                <div className="pt-2 text-gold-400 font-bold text-xs sm:text-sm tracking-wider space-y-1">
-                  <p>* 100% 예약제 운영 중입니다 *</p>
-                  <p className="text-stone-300 font-normal text-xs">* 부재 시 문자 남겨주세요 *</p>
+                <div className="flex items-center justify-between px-2 sm:px-6">
+                  <span className="font-bold text-[#3E2C1E]">금 - 토</span>
+                  <span className="font-mono text-[#543D2B]">{shopConfig.weekendHours?.start || '10:30'}</span>
+                  <span className="font-mono text-[#543D2B]">{shopConfig.weekendHours?.end || '21:00'}</span>
+                </div>
+                <div className="text-right pr-2 sm:pr-6 pt-1">
+                  <span className="text-xs sm:text-sm font-bold text-[#DF9A8C] tracking-wide">
+                    {shopConfig.closedDays && shopConfig.closedDays.length > 0
+                      ? `${shopConfig.closedDays.map(d => ['일','월','화','수','목','금','토'][d]).join(', ')}요일은 쉬어요:)`
+                      : '휴무일 없음:)'}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Quick Action CTA Buttons */}
-            <div className="mt-8 pt-6 border-t border-brand-800 flex flex-col sm:flex-row gap-3 justify-center relative z-10">
+            {/* Dashed Separator 2 */}
+            <div className="my-6 border-b-2 border-dashed border-[#D9C4AD] opacity-70" />
+
+            {/* 3) Service Offerings Overview */}
+            <div className="text-center space-y-2 text-sm sm:text-base font-bold text-[#4A3728]">
+              <p className="tracking-wide">
+                속눈썹 연장 <span className="text-[#D9C4AD] mx-1">/</span> LED 연장 <span className="text-[#D9C4AD] mx-1">/</span> 펌
+              </p>
+              <p className="tracking-wide">
+                여자눈썹 <span className="text-[#D9C4AD] mx-1">/</span> 남자눈썹 <span className="text-[#D9C4AD] mx-1">/</span> 입술 <span className="text-[#D9C4AD] mx-1">/</span> 아이라인 <span className="text-[#D9C4AD] mx-1">/</span> 미인점
+              </p>
+            </div>
+
+            {/* 4) Phone Number */}
+            <div className="text-center my-6">
+              <a
+                href={`tel:${shopConfig.phone}`}
+                className="inline-block text-2xl sm:text-4xl font-extrabold font-mono tracking-wider text-[#3E2C1E] hover:text-[#DF9A8C] transition-colors"
+              >
+                {shopConfig.phone}
+              </a>
+            </div>
+
+            {/* 5) Notice Footer */}
+            <div className="text-center mb-8">
+              <p className="text-xs sm:text-sm font-semibold text-[#DF9A8C] tracking-tight">
+                100% 예약제 운영중 입니다. 부재 시 문자 남겨주세요 :)
+              </p>
+            </div>
+
+            {/* 6) Quick Action CTA Buttons */}
+            <div className="pt-4 border-t border-[#EBDCD0] flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={() => handleOpenBooking()}
-                className="px-8 py-4 bg-gradient-to-r from-gold-500 via-gold-400 to-gold-500 hover:from-gold-400 hover:to-gold-300 text-stone-950 font-extrabold rounded-2xl text-sm sm:text-base shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+                className="px-8 py-4 bg-[#DF9A8C] hover:bg-[#D18475] text-white font-extrabold rounded-2xl text-sm sm:text-base shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-5 h-5 text-stone-900" />
+                <Sparkles className="w-5 h-5 text-white" />
                 <span>실시간 간편 예약하기</span>
               </button>
 
               <button
                 onClick={() => setIsLookupOpen(true)}
-                className="px-6 py-4 bg-brand-950/80 hover:bg-brand-950 text-stone-200 hover:text-white font-bold rounded-2xl text-sm border border-gold-400/40 hover:border-gold-300 transition-all flex items-center justify-center gap-2"
+                className="px-6 py-4 bg-white hover:bg-[#FAF5EE] text-[#4A3728] hover:text-[#3E2C1E] font-bold rounded-2xl text-sm border-2 border-[#D9C4AD] hover:border-[#DF9A8C] transition-all flex items-center justify-center gap-2 shadow-sm"
               >
-                <Search className="w-4 h-4 text-gold-400" />
+                <Search className="w-4 h-4 text-[#DF9A8C]" />
                 <span>내 예약 확인 / 취소</span>
               </button>
             </div>
+
           </div>
         </div>
       </section>
@@ -182,7 +169,7 @@ export const CustomerHome: React.FC = () => {
             </div>
 
             {/* Category Filter Pills */}
-            <div className="flex flex-wrap gap-1.5 p-1.5 bg-stone-100 rounded-2xl">
+            <div className="flex flex-wrap gap-1.5 p-1.5 bg-[#f4ece1] rounded-2xl border border-[#ebdcd0]">
               {categories.map((cat) => (
                 <button
                   key={cat}
@@ -190,7 +177,7 @@ export const CustomerHome: React.FC = () => {
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     selectedCategory === cat
                       ? 'bg-brand-900 text-gold-300 shadow-sm'
-                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60'
+                      : 'text-stone-700 hover:text-brand-900 hover:bg-[#eadecc]'
                   }`}
                 >
                   {cat}

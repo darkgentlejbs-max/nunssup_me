@@ -4,12 +4,18 @@
 
 @layer base {
   body {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    background-color: #faf7f2;
+    color: #2c251f;
+    font-family: 'Gowun Dodum', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   }
 }
 
 .font-serif-kr {
-  font-family: 'Noto Serif KR', serif;
+  font-family: 'Gowun Batang', 'Noto Serif KR', serif;
+}
+
+.font-dodum {
+  font-family: 'Gowun Dodum', 'Pretendard', sans-serif;
 }
 
 /* Custom scrollbars */

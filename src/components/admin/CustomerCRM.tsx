@@ -42,6 +42,7 @@ export const CustomerCRM: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGrade, setSelectedGrade] = useState<CustomerGrade | '전체'>('전체');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [viewMode, setViewMode] = useState<'split' | 'table'>('split');
 
   // Modals
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
@@ -233,15 +234,15 @@ export const CustomerCRM: React.FC = () => {
 
         {/* Grade Filters & New Customer Button */}
         <div className="flex items-center gap-2 flex-wrap justify-end w-full md:w-auto">
-          <div className="flex bg-stone-100 p-1 rounded-xl">
+          <div className="flex bg-[#FAF5EE] p-1 rounded-xl border border-[#E8DBCA]">
             {(['전체', 'VIP', '단골', '신규', '주의'] as (CustomerGrade | '전체')[]).map((g) => (
               <button
                 key={g}
                 onClick={() => setSelectedGrade(g)}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                   selectedGrade === g
-                    ? 'bg-brand-900 text-gold-300 shadow-sm'
-                    : 'text-stone-600 hover:text-stone-900'
+                    ? 'bg-[#3E2C1E] text-white shadow-sm'
+                    : 'text-[#6E5341] hover:text-[#3E2C1E]'
                 }`}
               >
                 {g}
@@ -249,9 +250,28 @@ export const CustomerCRM: React.FC = () => {
             ))}
           </div>
 
+          <div className="flex bg-[#FAF5EE] p-1 rounded-xl border border-[#E8DBCA] ml-2">
+            <button
+              onClick={() => setViewMode('split')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'split' ? 'bg-[#3E2C1E] text-white shadow-sm' : 'text-[#6E5341] hover:text-[#3E2C1E]'
+              }`}
+            >
+              차트 뷰
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'table' ? 'bg-[#3E2C1E] text-white shadow-sm' : 'text-[#6E5341] hover:text-[#3E2C1E]'
+              }`}
+            >
+              명부 뷰
+            </button>
+          </div>
+
           <button
             onClick={() => setIsAddCustomerOpen(true)}
-            className="px-4 py-2 bg-brand-900 hover:bg-brand-800 text-gold-300 hover:text-white rounded-xl text-xs font-bold transition-all shadow flex items-center gap-1.5"
+            className="px-4 py-2 bg-[#DF9A8C] hover:bg-[#D18475] text-white rounded-xl text-xs font-bold transition-all shadow flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
             <span>신규 회원 등록</span>
@@ -260,6 +280,50 @@ export const CustomerCRM: React.FC = () => {
       </div>
 
       {/* 2. CUSTOMER LIST & STATS */}
+      {viewMode === 'table' ? (
+        <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="bg-[#FAF5EE] text-[#6E5341] font-bold">
+              <tr>
+                <th className="p-4">이름</th>
+                <th className="p-4">등급</th>
+                <th className="p-4">연락처</th>
+                <th className="p-4">피부타입</th>
+                <th className="p-4">총 시술횟수</th>
+                <th className="p-4">총 결제금액</th>
+                <th className="p-4">관리</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-stone-100">
+              {filteredCustomers.length === 0 ? (
+                <tr><td colSpan={7} className="p-8 text-center text-stone-500 font-bold">등록된 회원이 없습니다.</td></tr>
+              ) : (
+                filteredCustomers.map(cust => (
+                  <tr key={cust.id} className="hover:bg-stone-50">
+                    <td className="p-4 font-bold">{cust.name}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${getGradeBadgeInfo(cust.grade).bg}`}>
+                        {cust.grade}
+                      </span>
+                    </td>
+                    <td className="p-4 font-mono text-stone-600">{cust.phone}</td>
+                    <td className="p-4 text-stone-600">{cust.skinType || '-'}</td>
+                    <td className="p-4 font-mono">{cust.totalVisits}회</td>
+                    <td className="p-4 font-mono">{formatCurrency(cust.totalSpent)}</td>
+                    <td className="p-4">
+                      <div className="flex gap-3">
+                        <button onClick={() => { setSelectedCustomer(cust); setViewMode('split'); }} className="text-[#DF9A8C] text-xs font-bold hover:underline">차트보기</button>
+                        <button onClick={() => handleOpenEditCustomer(cust)} className="text-stone-500 text-xs font-bold hover:underline">수정</button>
+                        <button onClick={() => handleDeleteCustomer(cust.id, cust.name)} className="text-rose-500 text-xs font-bold hover:underline">삭제</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) :
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Customer List Column */}
         <div className="lg:col-span-1 bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden flex flex-col h-[700px]">
@@ -512,7 +576,7 @@ export const CustomerCRM: React.FC = () => {
 
                   <button
                     onClick={() => setIsAddRecordOpen(true)}
-                    className="px-3 py-1.5 bg-brand-900 text-gold-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm"
+                    className="px-3 py-1.5 bg-[#DF9A8C] hover:bg-[#D18475] text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>시술 기록 추가</span>
@@ -601,6 +665,7 @@ export const CustomerCRM: React.FC = () => {
           )}
         </div>
       </div>
+      }
 
       {/* 3. MODAL: ADD CUSTOMER */}
       {isAddCustomerOpen && (
