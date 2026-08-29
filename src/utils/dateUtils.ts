@@ -91,11 +91,24 @@ export const getAvailableTimeSlots = (
   );
   const dayBlocks = timeBlocks.filter((b) => b.date === dateStr);
 
+  // Calculate current time in minutes if today (to block past slots)
+  const todayStr = formatLocalDate(new Date());
+  const isToday = dateStr === todayStr;
+  const now = new Date();
+  // Add 30 min buffer so customers can't book a slot that's about to start
+  const currentMinutes = isToday ? now.getHours() * 60 + now.getMinutes() + 30 : 0;
+
   const slots: { time: string; available: boolean; reason?: string }[] = [];
 
   for (let current = startMin; current + serviceDurationMinutes <= endMin; current += interval) {
     const timeStr = minutesToTime(current);
     const serviceEnd = current + serviceDurationMinutes;
+
+    // Check if slot has already passed (for today's date)
+    if (isToday && current < currentMinutes) {
+      slots.push({ time: timeStr, available: false, reason: '지난 시간' });
+      continue;
+    }
 
     // Check conflict with appointments
     let hasConflict = false;

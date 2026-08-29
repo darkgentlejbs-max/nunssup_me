@@ -18,7 +18,13 @@ import {
 export const SalesReport: React.FC = () => {
   const { appointments, customers, services, shopConfig, showToast } = useApp();
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = (() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = (now.getMonth() + 1).toString().padStart(2, '0');
+    const d = now.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  })();
   const currentMonthStr = todayStr.slice(0, 7); // 'YYYY-MM'
 
   // Calculate Revenue Stats
@@ -127,10 +133,10 @@ export const SalesReport: React.FC = () => {
           </div>
           <div className="mt-3">
             <h3 className="text-2xl font-extrabold font-mono text-brand-900">
-              {formatCurrency(thisMonthRevenue || totalRevenue)}
+              {formatCurrency(thisMonthRevenue)}
             </h3>
             <p className="text-[11px] text-stone-500 mt-1">
-              이번 달 시술 완료 {thisMonthCompleted.length || completedApts.length}건
+              이번 달 시술 완료 {thisMonthCompleted.length}건
             </p>
           </div>
         </div>
@@ -145,7 +151,7 @@ export const SalesReport: React.FC = () => {
           </div>
           <div className="mt-3">
             <h3 className="text-2xl font-extrabold font-mono text-stone-900">
-              {formatCurrency(aov || 150000)}
+              {formatCurrency(aov)}
             </h3>
             <p className="text-[11px] text-stone-500 mt-1">
               시술 1회당 평균 결제 금액

@@ -126,10 +126,14 @@ CREATE TABLE IF NOT EXISTS nunssup_store_data (
 
 -- RLS 활성화 및 앱 전체 접근 허용 정책 (데이터)
 ALTER TABLE nunssup_store_data ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow Full Access" ON nunssup_store_data;
 CREATE POLICY "Allow Full Access" ON nunssup_store_data FOR ALL USING (true) WITH CHECK (true);
 
 -- 스토리지 버킷 생성 (시술 전/후 사진)
 INSERT INTO storage.buckets (id, name, public) VALUES ('nunssup_photos', 'nunssup_photos', true) ON CONFLICT (id) DO NOTHING;
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+DROP POLICY IF EXISTS "Public Upload" ON storage.objects;
+DROP POLICY IF EXISTS "Public Delete" ON storage.objects;
 CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'nunssup_photos');
 CREATE POLICY "Public Upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'nunssup_photos');
 CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = 'nunssup_photos');

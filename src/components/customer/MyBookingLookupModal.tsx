@@ -20,8 +20,9 @@ export const MyBookingLookupModal: React.FC<MyBookingLookupModalProps> = ({
   if (!isOpen) return null;
 
   const cleanQuery = phoneQuery.replace(/[^0-9]/g, '');
-  const matchedAppointments = cleanQuery.length >= 4
-    ? appointments.filter((a) => a.customerPhone.replace(/[^0-9]/g, '').includes(cleanQuery))
+  // 정확히 일치하는 번호만 조회 (includes는 타인 정보 노출 위험)
+  const matchedAppointments = cleanQuery.length >= 9
+    ? appointments.filter((a) => a.customerPhone.replace(/[^0-9]/g, '') === cleanQuery)
     : [];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -152,9 +153,10 @@ export const MyBookingLookupModal: React.FC<MyBookingLookupModalProps> = ({
             </div>
           )}
 
-          {cleanQuery.length < 4 && (
+          {cleanQuery.length < 9 && (
             <div className="p-6 text-center bg-stone-50 rounded-2xl border border-dashed border-stone-300 text-stone-500 text-xs">
-              휴대폰 번호 뒷 4자리 이상을 입력하시면 예약 내역이 표시됩니다.
+              정확한 조회를 위해 휴대폰 번호를 끝까지 입력해 주세요.<br/>
+              <span className="text-stone-400">(예: 010-1234-5678)</span>
             </div>
           )}
 

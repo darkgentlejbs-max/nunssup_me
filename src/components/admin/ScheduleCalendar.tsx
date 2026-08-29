@@ -52,7 +52,8 @@ export const ScheduleCalendar: React.FC = () => {
     openSmsModal,
   } = useApp();
 
-  const [calendarView, setCalendarView] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [calendarView, setCalendarView] = useState<'daily' | 'weekly' | 'monthly' | 'list'>('daily');
+  const [listFilter, setListFilter] = useState<'upcoming' | 'past' | 'all'>('upcoming');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -133,6 +134,124 @@ export const ScheduleCalendar: React.FC = () => {
     }
   }
 
+  const renderListView = () => {
+    const todayStr = getTodayString();
+    
+    // 필터에 맞게 예약 필터링
+    let filteredAppointments = appointments.filter(a => a.status !== 'cancelled');
+    
+    if (listFilter === 'upcoming') {
+      filteredAppointments = filteredAppointments.filter(a => a.date >= todayStr);
+    } else if (listFilter === 'past') {
+      filteredAppointments = filteredAppointments.filter(a => a.date < todayStr);
+    }
+    
+    // 정렬 (다가오는 예약은 날짜 오름차순, 과거 예약은 날짜 내림차순, 전체는 날짜 내림차순)
+    filteredAppointments.sort((a, b) => {
+      const timeA = `${a.date} ${a.time}`;
+      const timeB = `${b.date} ${b.time}`;
+      if (listFilter === 'upcoming') {
+        return timeA.localeCompare(timeB);
+      }
+      return timeB.localeCompare(timeA);
+    });
+
+    return (
+      <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden flex flex-col h-[70vh]">
+        {/* 리스트 필터 탭 */}
+        <div className="flex border-b border-stone-200 bg-stone-50/50 p-2 gap-2">
+          <button
+            onClick={() => setListFilter('upcoming')}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex-1 ${
+              listFilter === 'upcoming' ? 'bg-white shadow-sm border border-stone-200 text-brand-900' : 'text-stone-500 hover:text-stone-700'
+            }`}
+          >
+            다가오는 예약
+          </button>
+          <button
+            onClick={() => setListFilter('past')}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex-1 ${
+              listFilter === 'past' ? 'bg-white shadow-sm border border-stone-200 text-brand-900' : 'text-stone-500 hover:text-stone-700'
+            }`}
+          >
+            지난 예약
+          </button>
+          <button
+            onClick={() => setListFilter('all')}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex-1 ${
+              listFilter === 'all' ? 'bg-white shadow-sm border border-stone-200 text-brand-900' : 'text-stone-500 hover:text-stone-700'
+            }`}
+          >
+            전체 보기
+          </button>
+        </div>
+
+        {/* 리스트 내용 */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {filteredAppointments.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-stone-400">
+              <CalendarIcon className="w-12 h-12 mb-3 opacity-20" />
+              <p>해당하는 예약이 없습니다.</p>
+            </div>
+          ) : (
+            filteredAppointments.map(apt => {
+              const badge = getStatusBadgeInfo(apt.status);
+              return (
+                <div key={apt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-stone-200 rounded-2xl hover:border-brand-300 transition-colors shadow-sm gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${badge.bg} ${badge.text} ${badge.border}`}>
+                        {badge.label}
+                      </span>
+                      <span className="text-sm font-bold text-stone-900">
+                        {formatKoreanDate(apt.date)} {apt.time}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-brand-900">{apt.customerName}</span>
+                      <span className="text-xs text-stone-500 font-mono">{formatPhoneNumber(apt.customerPhone)}</span>
+                    </div>
+                    <div className="text-xs text-stone-600 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-gold-500" />
+                      <span>{apt.serviceName}</span>
+                      <span className="text-stone-300">|</span>
+                      <span className="font-mono font-semibold">{formatCurrency(apt.price)}</span>
+                    </div>
+                    {apt.notes && (
+                      <p className="text-[11px] text-stone-500 bg-stone-50 p-1.5 rounded-lg border border-stone-100 inline-block mt-1">
+                        메모: {apt.notes}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 self-end sm:self-center">
+                    <button
+                      onClick={() => {
+                        setSelectedAppointment(apt);
+                        setIsAddModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-lg transition-colors"
+                    >
+                      상세 보기
+                    </button>
+                    {apt.status === 'pending' && (
+                      <button
+                        onClick={() => updateAppointmentStatus(apt.id, 'confirmed')}
+                        className="px-3 py-1.5 bg-brand-900 hover:bg-brand-800 text-gold-300 text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        <Check className="w-3 h-3" /> 승인
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. TOP CONTROLS & DATE NAVIGATOR */}
@@ -205,6 +324,16 @@ export const ScheduleCalendar: React.FC = () => {
               }`}
             >
               월간 뷰
+            </button>
+            <button
+              onClick={() => setCalendarView('list')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                calendarView === 'list'
+                  ? 'bg-brand-900 text-white shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              목록 뷰
             </button>
           </div>
 
@@ -723,6 +852,9 @@ export const ScheduleCalendar: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* 4.5. LIST VIEW */}
+      {calendarView === 'list' && renderListView()}
 
       {/* 5. MODAL: DIRECT APPOINTMENT ADD */}
       {isAddModalOpen && (
