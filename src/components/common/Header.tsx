@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useLayoutMode } from '../../App';
 import { AdminLoginModal } from '../admin/AdminLoginModal';
-import { Sparkles, ShieldCheck, Phone, Clock, LogOut, Lock, RefreshCw } from 'lucide-react';
+import { Sparkles, ShieldCheck, Phone, Clock, LogOut, Lock, RefreshCw, Monitor, Smartphone } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const {
@@ -16,6 +17,7 @@ export const Header: React.FC = () => {
     lastSyncedAt,
     syncWithCloud,
   } = useApp();
+  const { layoutMode, toggleLayoutMode } = useLayoutMode();
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const pendingCount = appointments.filter((a) => a.status === 'pending').length;
@@ -148,6 +150,26 @@ export const Header: React.FC = () => {
                 </span>
               </button>
             ) : null}
+
+            {/* Layout Mode Toggle (PC ↔ Mobile) */}
+            <button
+              type="button"
+              onClick={toggleLayoutMode}
+              title={layoutMode === 'pc' ? '스마트폰 화면으로 전환' : 'PC 화면으로 전환'}
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-brand-950/80 border border-brand-700/80 text-[11px] text-stone-300 hover:text-white hover:border-gold-400/60 transition-all"
+            >
+              {layoutMode === 'pc' ? (
+                <>
+                  <Smartphone className="w-3.5 h-3.5 text-gold-400" />
+                  <span>폰 뷰</span>
+                </>
+              ) : (
+                <>
+                  <Monitor className="w-3.5 h-3.5 text-gold-400" />
+                  <span>PC 뷰</span>
+                </>
+              )}
+            </button>
 
             {/* Logout button (visible only in admin mode) */}
             {viewMode === 'admin' && isAdminAuthenticated && (

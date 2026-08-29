@@ -520,12 +520,12 @@ export const CustomerCRM: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {activeCustomer.history.length === 0 ? (
+                  {(activeCustomer.history ?? []).length === 0 ? (
                     <div className="p-8 text-center text-xs text-stone-500 bg-stone-50 rounded-2xl border border-stone-200">
                       아직 등록된 시술 이력이 없습니다.
                     </div>
                   ) : (
-                    activeCustomer.history.map((item, idx) => (
+                    (activeCustomer.history ?? []).map((item, idx) => (
                       <div
                         key={item.id || idx}
                         className="p-4 rounded-2xl border border-stone-200 hover:border-brand-300 bg-stone-50/50 space-y-2 text-xs"

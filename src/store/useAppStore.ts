@@ -255,7 +255,7 @@ export const useAppStore = create<AppStore>((set, get) => {
           totalVisits: 0,
           totalSpent: 0,
           history: [],
-          createdAt: new Date().toISOString().split('T')[0],
+          createdAt: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })(),
         };
         set((s) => ({ customers: [newCust, ...s.customers] }));
         existingCustomer = newCust;
@@ -274,7 +274,7 @@ export const useAppStore = create<AppStore>((set, get) => {
         status: 'pending',
         notes: data.notes || '',
         isFirstVisit: data.isFirstVisit,
-        createdAt: new Date().toISOString().split('T')[0],
+        createdAt: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })(),
         paymentMethod: 'unpaid',
       };
 
@@ -433,9 +433,12 @@ export const useAppStore = create<AppStore>((set, get) => {
           isRemoteUpdating = true;
 
           const updates: Partial<AppStore> = {};
-          if (cloudData.shopConfig) updates.shopConfig = cloudData.shopConfig;
+          if (cloudData.shopConfig) {
+            // Preserve local adminPin - never overwrite it from cloud data
+            updates.shopConfig = { ...cloudData.shopConfig, adminPin: get().shopConfig.adminPin };
+          }
           if (cloudData.services && cloudData.services.length) updates.services = cloudData.services;
-          if (cloudData.customers) updates.customers = cloudData.customers;
+          if (cloudData.customers) updates.customers = cloudData.customers.map((c: any) => ({ ...c, history: c.history ?? [] }));
           if (cloudData.appointments) updates.appointments = cloudData.appointments;
           if (cloudData.timeBlocks) updates.timeBlocks = cloudData.timeBlocks;
 
@@ -457,7 +460,9 @@ export const useAppStore = create<AppStore>((set, get) => {
       } catch (err) {
         console.warn('Supabase sync pull error:', err);
         set({ cloudSyncStatus: 'offline' });
-        hasHydratedFromCloud = true;
+        // DO NOT set hasHydratedFromCloud = true here.
+        // If the pull fails (offline/network error), we must NOT allow local state
+        // to be pushed to cloud, as it could overwrite real cloud data when reconnected.
       }
     },
 
@@ -515,9 +520,13 @@ export const useAppStore = create<AppStore>((set, get) => {
       try {
         const data = JSON.parse(json);
         const updates: Partial<AppStore> = {};
-        if (data.shopConfig) updates.shopConfig = data.shopConfig;
+        if (data.shopConfig) {
+          // Never restore adminPin from backup - keep the locally stored PIN
+          const { adminPin: _pin, ...safeShopConfig } = data.shopConfig as any;
+          updates.shopConfig = { ...safeShopConfig, adminPin: get().shopConfig.adminPin };
+        }
         if (data.services) updates.services = data.services;
-        if (data.customers) updates.customers = data.customers;
+        if (data.customers) updates.customers = data.customers.map((c: any) => ({ ...c, history: c.history ?? [] }));
         if (data.appointments) updates.appointments = data.appointments;
         if (data.timeBlocks) updates.timeBlocks = data.timeBlocks;
         set(updates);
@@ -568,8 +577,11 @@ useAppStore.subscribe((state, prevState) => {
         const nowIso = new Date().toISOString();
         lastCloudUpdatedTimestamp = nowIso;
         
+        // Strip adminPin from shopConfig before pushing to cloud for security
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { adminPin: _pin, ...safeShopConfig } = state.shopConfig as any;
         const payload: SyncPayload = {
-          shopConfig: state.shopConfig,
+          shopConfig: safeShopConfig,
           services: state.services,
           customers: state.customers,
           appointments: state.appointments,
