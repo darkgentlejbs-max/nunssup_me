@@ -11,9 +11,9 @@ export interface CloudDbConfig {
 }
 
 export const defaultCloudConfig: CloudDbConfig = {
-  supabaseUrl: '',
-  supabaseAnonKey: '',
-  storeChannelId: 'nunssup_me_7721', // Unique store sync channel identifier
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+  storeChannelId: import.meta.env.VITE_STORE_CHANNEL_ID || 'nunssup_me_7721', // Unique store sync channel identifier
   autoSyncEnabled: true,
 };
 
@@ -24,9 +24,9 @@ export const getSavedCloudConfig = (): CloudDbConfig => {
     try {
       const parsed = JSON.parse(saved);
       return {
-        supabaseUrl: parsed.supabaseUrl || '',
-        supabaseAnonKey: parsed.supabaseAnonKey || '',
-        storeChannelId: parsed.storeChannelId || 'nunssup_me_7721',
+        supabaseUrl: parsed.supabaseUrl || defaultCloudConfig.supabaseUrl,
+        supabaseAnonKey: parsed.supabaseAnonKey || defaultCloudConfig.supabaseAnonKey,
+        storeChannelId: parsed.storeChannelId || defaultCloudConfig.storeChannelId,
         autoSyncEnabled: parsed.autoSyncEnabled ?? true,
       };
     } catch {

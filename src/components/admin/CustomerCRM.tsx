@@ -604,9 +604,9 @@ export const CustomerCRM: React.FC = () => {
 
       {/* 3. MODAL: ADD CUSTOMER */}
       {isAddCustomerOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-stone-200">
-            <div className="bg-brand-900 text-white p-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col border border-stone-200">
+            <div className="bg-brand-900 text-white p-5 flex items-center justify-between shrink-0">
               <h3 className="font-serif-kr font-bold text-lg text-gold-300">신규 회원 등록</h3>
               <button
                 onClick={() => setIsAddCustomerOpen(false)}
@@ -616,7 +616,7 @@ export const CustomerCRM: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateCustomer} className="p-6 space-y-4">
+            <form onSubmit={handleCreateCustomer} className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-stone-700 mb-1">
                   고객 성함 <span className="text-rose-500">*</span>
@@ -719,9 +719,9 @@ export const CustomerCRM: React.FC = () => {
 
       {/* 4. MODAL: ADD TREATMENT RECORD */}
       {isAddRecordOpen && activeCustomer && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-stone-200">
-            <div className="bg-brand-900 text-white p-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col border border-stone-200">
+            <div className="bg-brand-900 text-white p-5 flex items-center justify-between shrink-0">
               <h3 className="font-serif-kr font-bold text-lg text-gold-300">
                 {activeCustomer.name}님 시술 차트 기록 추가
               </h3>
@@ -733,7 +733,7 @@ export const CustomerCRM: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddTreatmentRecord} className="p-6 space-y-4">
+            <form onSubmit={handleAddTreatmentRecord} className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-stone-700 mb-1">시술 일자</label>
@@ -867,9 +867,9 @@ export const CustomerCRM: React.FC = () => {
 
       {/* 5. MODAL: EDIT CUSTOMER INFO */}
       {isEditCustomerOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-stone-200">
-            <div className="bg-brand-900 text-white p-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col border border-stone-200">
+            <div className="bg-brand-900 text-white p-5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <Edit2 className="w-5 h-5 text-gold-300" />
                 <h3 className="font-serif-kr font-bold text-lg text-gold-300">회원 정보 수정</h3>
@@ -882,7 +882,7 @@ export const CustomerCRM: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleUpdateCustomer} className="p-6 space-y-4">
+            <form onSubmit={handleUpdateCustomer} className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-stone-700 mb-1">
