@@ -6,8 +6,17 @@ export const initialShopConfig: ShopConfig = {
   instagram: '@nunssup_me',
   phone: '010.3797.7721',
   address: '전남광주통합특별시 여수시 문수로 148, 1층(문수동)',
-  weekdayHours: { start: '10:30', end: '19:00' }, // 월-수 10:30 ~ 19:00
-  weekendHours: { start: '10:30', end: '21:00' }, // 목-토 10:30 ~ 21:00
+  weekdayHours: { start: '10:30', end: '19:00' }, // Legacy
+  weekendHours: { start: '10:30', end: '21:00' }, // Legacy
+  dayHours: [
+    { start: '10:30', end: '19:00' }, // 0: Sun (closed by default)
+    { start: '10:30', end: '19:00' }, // 1: Mon
+    { start: '10:30', end: '19:00' }, // 2: Tue
+    { start: '10:30', end: '19:00' }, // 3: Wed
+    { start: '10:30', end: '21:00' }, // 4: Thu
+    { start: '10:30', end: '21:00' }, // 5: Fri
+    { start: '10:30', end: '21:00' }, // 6: Sat
+  ],
   closedDays: [0], // 0 = 일요일 휴무 (일요일은 쉬어요:))
   slotIntervalMinutes: 30,
   notice: '100% 예약제 운영중 입니다. 부재 시 문자 남겨주세요 :)',

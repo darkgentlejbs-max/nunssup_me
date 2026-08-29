@@ -82,10 +82,17 @@ export const ShopSettings: React.FC = () => {
   const [notice, setNotice] = useState(shopConfig.notice);
 
   // Hours
-  const [weekdayStart, setWeekdayStart] = useState(shopConfig.weekdayHours.start);
-  const [weekdayEnd, setWeekdayEnd] = useState(shopConfig.weekdayHours.end);
-  const [weekendStart, setWeekendStart] = useState(shopConfig.weekendHours.start);
-  const [weekendEnd, setWeekendEnd] = useState(shopConfig.weekendHours.end);
+  const [dayHours, setDayHours] = useState(
+    shopConfig.dayHours || [
+      { start: shopConfig.weekdayHours.start, end: shopConfig.weekdayHours.end }, // 0
+      { start: shopConfig.weekdayHours.start, end: shopConfig.weekdayHours.end }, // 1
+      { start: shopConfig.weekdayHours.start, end: shopConfig.weekdayHours.end }, // 2
+      { start: shopConfig.weekdayHours.start, end: shopConfig.weekdayHours.end }, // 3
+      { start: shopConfig.weekendHours.start, end: shopConfig.weekendHours.end }, // 4
+      { start: shopConfig.weekendHours.start, end: shopConfig.weekendHours.end }, // 5
+      { start: shopConfig.weekendHours.start, end: shopConfig.weekendHours.end }, // 6
+    ]
+  );
   const [closedDays, setClosedDays] = useState<number[]>(shopConfig.closedDays || [0]);
 
   // PIN Change Form
@@ -187,8 +194,9 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
       instagram,
       address,
       notice,
-      weekdayHours: { start: weekdayStart, end: weekdayEnd },
-      weekendHours: { start: weekendStart, end: weekendEnd },
+      weekdayHours: shopConfig.weekdayHours, // keep legacy
+      weekendHours: shopConfig.weekendHours, // keep legacy
+      dayHours,
       closedDays,
     });
   };
@@ -363,81 +371,66 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
         <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-4">
           <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-brand-900" />
-            <span>영업 시간 및 정기 휴무일</span>
+            <span>요일별 영업시간 및 휴무 설정</span>
           </span>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            {/* Weekdays */}
-            <div className="p-3 bg-white rounded-xl border border-stone-200 space-y-2">
-              <span className="font-bold text-stone-800 block">월 - 목 영업시간</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="time"
-                  value={weekdayStart}
-                  onChange={(e) => setWeekdayStart(e.target.value)}
-                  className="px-2 py-1 border rounded-lg font-mono text-xs"
-                />
-                <span>~</span>
-                <input
-                  type="time"
-                  value={weekdayEnd}
-                  onChange={(e) => setWeekdayEnd(e.target.value)}
-                  className="px-2 py-1 border rounded-lg font-mono text-xs"
-                />
-              </div>
-            </div>
+          <div className="space-y-2">
+            {['일', '월', '화', '수', '목', '금', '토'].map((dayLabel, idx) => {
+              const isClosed = closedDays.includes(idx);
+              const hours = dayHours[idx];
 
-            {/* Weekends */}
-            <div className="p-3 bg-white rounded-xl border border-stone-200 space-y-2">
-              <span className="font-bold text-stone-800 block">금 - 토 영업시간</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="time"
-                  value={weekendStart}
-                  onChange={(e) => setWeekendStart(e.target.value)}
-                  className="px-2 py-1 border rounded-lg font-mono text-xs"
-                />
-                <span>~</span>
-                <input
-                  type="time"
-                  value={weekendEnd}
-                  onChange={(e) => setWeekendEnd(e.target.value)}
-                  className="px-2 py-1 border rounded-lg font-mono text-xs"
-                />
-              </div>
-            </div>
-          </div>
-          {/* Closed Days UI */}
-          <div className="pt-2 border-t border-stone-200">
-            <span className="font-bold text-stone-800 block text-xs mb-2">매주 정기 휴무일 선택 (다중 선택 가능)</span>
-            <div className="flex items-center gap-2 flex-wrap">
-              {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => {
-                const isSelected = closedDays.includes(idx);
-                return (
+              return (
+                <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-200">
+                  <span className="w-10 text-center font-bold text-stone-800 text-xs">{dayLabel}</span>
+                  
                   <button
-                    key={idx}
                     type="button"
                     onClick={() => {
-                      if (isSelected) {
+                      if (isClosed) {
                         setClosedDays(closedDays.filter(d => d !== idx));
                       } else {
                         setClosedDays([...closedDays, idx].sort());
                       }
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      isSelected 
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap ${
+                      isClosed 
                         ? 'bg-rose-50 text-rose-600 border border-rose-200 shadow-sm'
-                        : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'
+                        : 'bg-stone-100 text-stone-500 border border-transparent hover:bg-stone-200'
                     }`}
                   >
-                    {day}
+                    {isClosed ? '휴무' : '영업'}
                   </button>
-                );
-              })}
-            </div>
-            <p className="text-[11px] text-stone-500 mt-2">
-              * 선택한 요일은 고객 예약창에서 자동으로 예약이 차단됩니다.
-            </p>
+
+                  {!isClosed ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="time"
+                        value={hours.start}
+                        onChange={(e) => {
+                          const newHours = [...dayHours];
+                          newHours[idx] = { ...newHours[idx], start: e.target.value };
+                          setDayHours(newHours);
+                        }}
+                        className="flex-1 max-w-[120px] px-2 py-1 border rounded-lg font-mono text-xs"
+                      />
+                      <span className="text-stone-400">~</span>
+                      <input
+                        type="time"
+                        value={hours.end}
+                        onChange={(e) => {
+                          const newHours = [...dayHours];
+                          newHours[idx] = { ...newHours[idx], end: e.target.value };
+                          setDayHours(newHours);
+                        }}
+                        className="flex-1 max-w-[120px] px-2 py-1 border rounded-lg font-mono text-xs"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex-1 text-[11px] text-stone-400">이 요일은 예약이 차단됩니다.</div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </form>

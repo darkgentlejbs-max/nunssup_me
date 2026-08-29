@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { ServiceCategory, ServiceItem } from '../../types';
 import { ServiceCard } from './ServiceCard';
 import { BookingModal } from './BookingModal';
+import { getOperatingHoursGroups } from '../../utils/dateUtils';
 import { MyBookingLookupModal } from './MyBookingLookupModal';
 import {
   Sparkles,
@@ -78,16 +79,16 @@ export const CustomerHome: React.FC = () => {
 
               {/* Hours Rows */}
               <div className="space-y-2.5 pt-2 text-sm sm:text-base font-semibold text-[#4A3728]">
-                <div className="flex items-center justify-between px-2 sm:px-6">
-                  <span className="font-bold text-[#3E2C1E]">월 - 목</span>
-                  <span className="font-mono text-[#543D2B]">{shopConfig.weekdayHours?.start || '10:30'}</span>
-                  <span className="font-mono text-[#543D2B]">{shopConfig.weekdayHours?.end || '19:00'}</span>
-                </div>
-                <div className="flex items-center justify-between px-2 sm:px-6">
-                  <span className="font-bold text-[#3E2C1E]">금 - 토</span>
-                  <span className="font-mono text-[#543D2B]">{shopConfig.weekendHours?.start || '10:30'}</span>
-                  <span className="font-mono text-[#543D2B]">{shopConfig.weekendHours?.end || '21:00'}</span>
-                </div>
+                {getOperatingHoursGroups(shopConfig).map((group, idx) => (
+                  <div key={idx} className="flex items-center justify-between px-2 sm:px-6">
+                    <span className="font-bold text-[#3E2C1E]">{group.label}</span>
+                    <div className="flex gap-1.5 sm:gap-3">
+                      <span className="font-mono text-[#543D2B]">{group.start}</span>
+                      <span className="font-mono text-[#543D2B]">-</span>
+                      <span className="font-mono text-[#543D2B]">{group.end}</span>
+                    </div>
+                  </div>
+                ))}
                 <div className="text-right pr-2 sm:pr-6 pt-1">
                   <span className="text-xs sm:text-sm font-bold text-[#DF9A8C] tracking-wide">
                     {shopConfig.closedDays && shopConfig.closedDays.length > 0

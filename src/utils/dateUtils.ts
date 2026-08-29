@@ -48,8 +48,9 @@ export const isDateClosed = (dateStr: string, shopConfig: ShopConfig): { isClose
   const dateObj = new Date(y, m - 1, d);
   const dayOfWeek = dateObj.getDay();
 
-  if (shopConfig.closedDays.includes(dayOfWeek)) {
-    return { isClosed: true, reason: '정기 휴무일 (일요일)' };
+  if ((shopConfig.closedDays || []).includes(dayOfWeek)) {
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    return { isClosed: true, reason: `정기 휴무일 (${dayNames[dayOfWeek]}요일)` };
   }
   return { isClosed: false };
 };
@@ -60,11 +61,14 @@ export const getHoursForDate = (dateStr: string, shopConfig: ShopConfig): { star
   const dateObj = new Date(y, m - 1, d);
   const dayOfWeek = dateObj.getDay();
 
-  // Friday (5) and Saturday (6) are weekend hours (10:00 - 21:00)
+  if (shopConfig.dayHours && shopConfig.dayHours[dayOfWeek]) {
+    return shopConfig.dayHours[dayOfWeek];
+  }
+
+  // Fallback for legacy configs if migration failed
   if (dayOfWeek === 5 || dayOfWeek === 6) {
     return shopConfig.weekendHours;
   }
-  // Monday (1) to Thursday (4) are weekday hours (10:00 - 19:00)
   return shopConfig.weekdayHours;
 };
 
@@ -240,4 +244,51 @@ export const getMonthGrid = (dateStr: string): MonthGridCell[] => {
   }
 
   return days;
+};
+
+// Formats the shopConfig dayHours into a grouped string like "월-수 10:00~19:00 | 목-토 10:00~21:00"
+export const getOperatingHoursGroups = (shopConfig: ShopConfig): { label: string; start: string; end: string }[] => {
+  if (!shopConfig.dayHours) {
+    return [
+      { label: '월 - 목', start: shopConfig.weekdayHours?.start || '10:30', end: shopConfig.weekdayHours?.end || '19:00' },
+      { label: '금 - 토', start: shopConfig.weekendHours?.start || '10:30', end: shopConfig.weekendHours?.end || '21:00' }
+    ];
+  }
+
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const groups: { start: string, end: string, days: number[] }[] = [];
+
+  for (let i = 1; i <= 7; i++) {
+    const dayIdx = i % 7;
+    if ((shopConfig.closedDays || []).includes(dayIdx)) continue;
+    
+    const hours = shopConfig.dayHours[dayIdx];
+    const lastGroup = groups[groups.length - 1];
+    
+    if (lastGroup && lastGroup.start === hours.start && lastGroup.end === hours.end) {
+      lastGroup.days.push(dayIdx);
+    } else {
+      groups.push({ start: hours.start, end: hours.end, days: [dayIdx] });
+    }
+  }
+
+  return groups.map(g => {
+    let label = '';
+    if (g.days.length === 1) {
+      label = days[g.days[0]];
+    } else {
+      let isConsecutive = true;
+      for (let i = 1; i < g.days.length; i++) {
+        let prev = g.days[i-1] === 0 ? 7 : g.days[i-1];
+        let curr = g.days[i] === 0 ? 7 : g.days[i];
+        if (curr - prev !== 1) isConsecutive = false;
+      }
+      if (isConsecutive) {
+        label = `${days[g.days[0]]} - ${days[g.days[g.days.length-1]]}`;
+      } else {
+        label = g.days.map(d => days[d]).join(', ');
+      }
+    }
+    return { label, start: g.start, end: g.end };
+  });
 };

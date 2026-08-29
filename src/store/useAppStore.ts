@@ -131,6 +131,20 @@ export const useAppStore = create<AppStore>((set, get) => {
         if (!parsed.address || parsed.address.includes('도산대로') || parsed.address.includes('강남구')) {
           parsed.address = initialShopConfig.address;
         }
+        if (!parsed.dayHours || !Array.isArray(parsed.dayHours) || parsed.dayHours.length !== 7) {
+          // Migration from old weekdayHours / weekendHours
+          const wd = parsed.weekdayHours || initialShopConfig.weekdayHours;
+          const we = parsed.weekendHours || initialShopConfig.weekendHours;
+          parsed.dayHours = [
+            { start: wd.start, end: wd.end }, // 0: Sun
+            { start: wd.start, end: wd.end }, // 1: Mon
+            { start: wd.start, end: wd.end }, // 2: Tue
+            { start: wd.start, end: wd.end }, // 3: Wed
+            { start: we.start, end: we.end }, // 4: Thu (legacy logic assumed weekend started Thu/Fri, let's map loosely)
+            { start: we.start, end: we.end }, // 5: Fri
+            { start: we.start, end: we.end }, // 6: Sat
+          ];
+        }
         return parsed;
       } catch {
         return initialShopConfig;
@@ -426,16 +440,37 @@ export const useAppStore = create<AppStore>((set, get) => {
         if (!isSilent) set({ cloudSyncStatus: 'syncing' });
         const res = await pullDataFromCloud(cloudConfig.storeChannelId);
         const cloudData = res.data;
-        hasHydratedFromCloud = true;
 
+        // CRITICAL FIX: only mark as hydrated if pull actually succeeded
+        // (data returned) or if the row simply doesn't exist yet (PGRST116).
+        // If there was a real network error, keep hasHydratedFromCloud = false
+        // so we don't accidentally push stale local data over real cloud data.
+        const isRowNotFound = res.error?.includes('PGRST116') || res.error?.includes('not found');
+        if (!res.error || isRowNotFound) {
+          hasHydratedFromCloud = true;
+        }
+
+        const updates: Partial<AppStore> = {};
         if (cloudData && cloudData.updatedAt && cloudData.updatedAt !== lastCloudUpdatedTimestamp) {
           lastCloudUpdatedTimestamp = cloudData.updatedAt;
           isRemoteUpdating = true;
 
-          const updates: Partial<AppStore> = {};
           if (cloudData.shopConfig) {
             // Preserve local adminPin - never overwrite it from cloud data
             updates.shopConfig = { ...cloudData.shopConfig, adminPin: get().shopConfig.adminPin };
+            if (!updates.shopConfig!.dayHours || !Array.isArray(updates.shopConfig!.dayHours) || updates.shopConfig!.dayHours.length !== 7) {
+              const wd = updates.shopConfig!.weekdayHours || initialShopConfig.weekdayHours;
+              const we = updates.shopConfig!.weekendHours || initialShopConfig.weekendHours;
+              updates.shopConfig!.dayHours = [
+                { start: wd.start, end: wd.end }, // 0
+                { start: wd.start, end: wd.end }, // 1
+                { start: wd.start, end: wd.end }, // 2
+                { start: wd.start, end: wd.end }, // 3
+                { start: we.start, end: we.end }, // 4
+                { start: we.start, end: we.end }, // 5
+                { start: we.start, end: we.end }, // 6
+              ];
+            }
           }
           if (cloudData.services && cloudData.services.length) updates.services = cloudData.services;
           if (cloudData.customers) updates.customers = cloudData.customers.map((c: any) => ({ ...c, history: c.history ?? [] }));
@@ -514,7 +549,10 @@ export const useAppStore = create<AppStore>((set, get) => {
     },
     exportDataJson: () => {
       const { shopConfig, services, customers, appointments, timeBlocks } = get();
-      return JSON.stringify({ shopConfig, services, customers, appointments, timeBlocks, exportedAt: new Date().toISOString() }, null, 2);
+      // Strip adminPin from backup export for security
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { adminPin: _pin, ...safeShopConfig } = shopConfig as any;
+      return JSON.stringify({ shopConfig: safeShopConfig, services, customers, appointments, timeBlocks, exportedAt: new Date().toISOString() }, null, 2);
     },
     importDataJson: (json) => {
       try {

@@ -78,8 +78,9 @@ export interface ShopConfig {
   instagram: string;
   phone: string;
   address: string;
-  weekdayHours: { start: string; end: string }; // 10:00 ~ 19:00
-  weekendHours: { start: string; end: string }; // 10:00 ~ 21:00 (금-토)
+  weekdayHours: { start: string; end: string }; // Legacy (10:00 ~ 19:00)
+  weekendHours: { start: string; end: string }; // Legacy (10:00 ~ 21:00)
+  dayHours?: { start: string; end: string }[]; // 0=Sun to 6=Sat
   closedDays: number[]; // [0] = 일요일
   slotIntervalMinutes: number; // 30
   notice: string;
