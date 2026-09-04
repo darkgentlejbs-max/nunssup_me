@@ -920,8 +920,8 @@ export const ScheduleCalendar: React.FC = () => {
       {/* 5. MODAL: DIRECT APPOINTMENT ADD */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-stone-200">
-            <div className="bg-brand-900 text-white p-5 flex items-center justify-between">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-stone-200">
+            <div className="bg-brand-900 text-white p-5 flex items-center justify-between shrink-0">
               <h3 className="font-serif-kr font-bold text-lg text-gold-300">
                 {editingApptId ? '원장님 예약 수정' : '원장님 직접 예약 등록'}
               </h3>
@@ -933,7 +933,7 @@ export const ScheduleCalendar: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateDirectBooking} className="p-6 space-y-4">
+            <form onSubmit={handleCreateDirectBooking} className="p-6 space-y-4 overflow-y-auto">
               <div className="relative">
                 <label className="block text-xs font-bold text-stone-700 mb-1">
                   고객 성함 <span className="text-rose-500">*</span>
@@ -1178,9 +1178,9 @@ export const ScheduleCalendar: React.FC = () => {
 
       {/* 5. MODAL: TIMEBLOCK ADD */}
       {isBlockModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-stone-200">
-            <div className="bg-stone-900 text-white p-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden border border-stone-200">
+            <div className="bg-stone-900 text-white p-5 flex items-center justify-between shrink-0">
               <h3 className="font-serif-kr font-bold text-base">예약 차단 시간 설정</h3>
               <button
                 onClick={() => setIsBlockModalOpen(false)}
@@ -1190,7 +1190,7 @@ export const ScheduleCalendar: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateBlock} className="p-6 space-y-4">
+            <form onSubmit={handleCreateBlock} className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-stone-700 mb-1">차단 날짜</label>
                 <input
@@ -1262,9 +1262,9 @@ export const ScheduleCalendar: React.FC = () => {
 
       {/* 6. MODAL: APPOINTMENT DETAIL */}
       {selectedAppointment && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-stone-200">
-            <div className="bg-brand-900 text-white p-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-stone-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-stone-200">
+            <div className="bg-brand-900 text-white p-5 flex items-center justify-between shrink-0">
               <h3 className="font-serif-kr font-bold text-lg text-gold-300">
                 예약 상세 정보 & 상태 변경
               </h3>
@@ -1276,7 +1276,7 @@ export const ScheduleCalendar: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto">
               {!isEditing ? (
                 <>
                   <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2 text-xs">
