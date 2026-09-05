@@ -257,9 +257,10 @@ export const ScheduleCalendar: React.FC = () => {
           ) : (
             filteredAppointments.map(apt => {
               const badge = getStatusBadgeInfo(apt.status);
+              const isCancelled = apt.status === 'cancelled';
               return (
-                <div key={apt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-stone-200 rounded-2xl hover:border-brand-300 transition-colors shadow-sm gap-4">
-                  <div className="flex flex-col gap-1.5">
+                <div key={apt.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-stone-200 rounded-2xl hover:border-brand-300 transition-colors shadow-sm gap-4 ${isCancelled ? 'opacity-60' : ''}`}>
+                  <div className={`flex flex-col gap-1.5 ${isCancelled ? 'line-through' : ''}`}>
                     <div className="flex items-center gap-2">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${badge.bg} ${badge.text} ${badge.border}`}>
                         {badge.label}
@@ -688,20 +689,27 @@ export const ScheduleCalendar: React.FC = () => {
                     </div>
 
                     <div className="space-y-1.5">
-                      {wApts.slice(0, 3).map((a) => (
-                        <div
-                          key={a.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedAppointment(a);
-                          }}
-                          className="p-1.5 rounded-lg bg-white border border-stone-200 text-[11px] font-semibold text-stone-800 truncate hover:border-brand-400 transition-colors"
-                          title="예약 상세 보기"
-                        >
-                          <span className="font-mono text-brand-900 font-bold">{a.time}</span>{' '}
-                          <span className="truncate">{a.customerName}</span>
-                        </div>
-                      ))}
+                      {wApts.slice(0, 3).map((a) => {
+                        const isCancelled = a.status === 'cancelled';
+                        return (
+                          <div
+                            key={a.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAppointment(a);
+                            }}
+                            className={`p-1.5 rounded-lg border text-[11px] font-semibold truncate hover:border-brand-400 transition-colors ${
+                              isCancelled
+                                ? 'bg-red-50 text-red-700 border-red-200 opacity-70 line-through'
+                                : 'bg-white text-stone-800 border-stone-200'
+                            }`}
+                            title="예약 상세 보기"
+                          >
+                            <span className={`font-mono font-bold ${isCancelled ? 'text-red-700' : 'text-brand-900'}`}>{a.time}</span>{' '}
+                            <span className="truncate">{a.customerName}</span>
+                          </div>
+                        );
+                      })}
                       {wApts.length > 3 && (
                         <div className="text-[10px] text-stone-500 font-semibold pl-1">
                           +{wApts.length - 3}건 더보기
