@@ -1298,29 +1298,31 @@ export const ScheduleCalendar: React.FC = () => {
                       <button 
                         onClick={() => {
                           // Initialize inline edit state
-                          setEditApptServices(
-                            selectedAppointment.serviceName.split(' + ').map((name, i, arr) => {
-                              const trimmedName = name.trim();
-                              let initialPrice = 0;
-                              
-                              if (arr.length === 1) {
-                                // 단일 시술인 경우 전체 결제 금액 사용
-                                initialPrice = selectedAppointment.price;
-                              } else {
-                                // 다중 시술인 경우 메뉴에서 원래 가격을 찾아 복원 (사용자가 개별 가격을 수정한 경우 메뉴 가격으로 나타남)
-                                const matchedService = services.find(s => s.name === trimmedName);
-                                initialPrice = matchedService ? matchedService.price : 0;
-                              }
-
-                              return {
-                                id: `edit-${Date.now()}-${i}`,
-                                name: trimmedName,
-                                price: initialPrice,
-                                saveToMenu: false,
-                                showDropdown: false
-                              };
-                            })
-                          );
+                          const splitNames = selectedAppointment.serviceName.split(' + ').map(n => n.trim());
+                          if (splitNames.length === 1) {
+                            setEditApptServices([{
+                              id: `edit-${Date.now()}-0`,
+                              name: splitNames[0],
+                              price: selectedAppointment.price,
+                              saveToMenu: false,
+                              showDropdown: false
+                            }]);
+                          } else {
+                            const defaultPrices = splitNames.map(name => {
+                              const matched = services.find(s => s.name === name);
+                              return matched ? matched.price : 0;
+                            });
+                            const defaultSum = defaultPrices.reduce((sum, p) => sum + p, 0);
+                            const diff = selectedAppointment.price - defaultSum;
+                            
+                            setEditApptServices(splitNames.map((name, i) => ({
+                              id: `edit-${Date.now()}-${i}`,
+                              name: name,
+                              price: i === 0 ? defaultPrices[i] + diff : defaultPrices[i],
+                              saveToMenu: false,
+                              showDropdown: false
+                            })));
+                          }
                           setIsEditing(true);
                         }}
                         className="px-3 py-1 bg-white border border-stone-200 rounded-lg text-xs font-bold text-stone-600 hover:bg-stone-100 transition-colors"
