@@ -1299,13 +1299,27 @@ export const ScheduleCalendar: React.FC = () => {
                         onClick={() => {
                           // Initialize inline edit state
                           setEditApptServices(
-                            selectedAppointment.serviceName.split(' + ').map((name, i) => ({
-                              id: `edit-${Date.now()}-${i}`,
-                              name: name.trim(),
-                              price: i === 0 ? selectedAppointment.price : 0, // Simplified price split
-                              saveToMenu: false,
-                              showDropdown: false
-                            }))
+                            selectedAppointment.serviceName.split(' + ').map((name, i, arr) => {
+                              const trimmedName = name.trim();
+                              let initialPrice = 0;
+                              
+                              if (arr.length === 1) {
+                                // 단일 시술인 경우 전체 결제 금액 사용
+                                initialPrice = selectedAppointment.price;
+                              } else {
+                                // 다중 시술인 경우 메뉴에서 원래 가격을 찾아 복원 (사용자가 개별 가격을 수정한 경우 메뉴 가격으로 나타남)
+                                const matchedService = services.find(s => s.name === trimmedName);
+                                initialPrice = matchedService ? matchedService.price : 0;
+                              }
+
+                              return {
+                                id: `edit-${Date.now()}-${i}`,
+                                name: trimmedName,
+                                price: initialPrice,
+                                saveToMenu: false,
+                                showDropdown: false
+                              };
+                            })
                           );
                           setIsEditing(true);
                         }}
