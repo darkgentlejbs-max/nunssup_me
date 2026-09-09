@@ -140,14 +140,30 @@ export const CustomerCRM: React.FC = () => {
   const [recAfterImage, setRecAfterImage] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
+  const handleOpenAddRecord = () => {
+    setEditingRecordId(null);
+    setRecDate(new Date().toISOString().split('T')[0]);
+    setRecServiceName(services[0]?.name || '여자 자연눈썹 (엠보)');
+    setRecPrice(services[0]?.price || 150000);
+    setRecPigment('');
+    setRecTechnique('');
+    setRecNotes('');
+    setRecBeforeImage('');
+    setRecAfterImage('');
+    setIsAddRecordOpen(true);
+  };
+
   const startEditingRecord = (item: TreatmentHistoryItem) => {
     setEditingRecordId(item.id);
-    setEditRecordDate(item.date);
-    setEditRecordService(item.serviceName);
-    setEditRecordPrice(item.price.toString());
-    setEditRecordPigment(item.pigmentColor || '');
-    setEditRecordTechnique(item.technique || '');
-    setEditRecordNotes(item.notes || '');
+    setRecDate(item.date);
+    setRecServiceName(item.serviceName);
+    setRecPrice(item.price);
+    setRecPigment(item.pigmentColor || '');
+    setRecTechnique(item.technique || '');
+    setRecNotes(item.notes || '');
+    setRecBeforeImage(item.beforeImage || '');
+    setRecAfterImage(item.afterImage || '');
+    setIsAddRecordOpen(true);
   };
 
   const handleUpdateRecord = (e: React.FormEvent) => {
@@ -204,10 +220,7 @@ export const CustomerCRM: React.FC = () => {
     setNewMemo('');
   };
 
-  const handleOpenAddRecord = () => {
-    setRecDate(new Date().toISOString().split('T')[0]);
-    setIsAddRecordOpen(true);
-  };
+
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'before' | 'after') => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -229,20 +242,34 @@ export const CustomerCRM: React.FC = () => {
     }
   };
 
-  const handleAddTreatmentRecord = (e: React.FormEvent) => {
+  const handleSubmitTreatmentRecord = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCustomer) return;
 
-    addTreatmentHistory(selectedCustomer.id, {
-      date: recDate,
-      serviceName: recServiceName,
-      price: Number(recPrice),
-      pigmentColor: recPigment.trim(),
-      technique: recTechnique.trim(),
-      notes: recNotes.trim(),
-      beforeImage: recBeforeImage,
-      afterImage: recAfterImage,
-    });
+    if (editingRecordId) {
+      updateTreatmentHistory(selectedCustomer.id, editingRecordId, {
+        date: recDate,
+        serviceName: recServiceName,
+        price: Number(recPrice),
+        pigmentColor: recPigment.trim(),
+        technique: recTechnique.trim(),
+        notes: recNotes.trim(),
+        beforeImage: recBeforeImage,
+        afterImage: recAfterImage,
+      });
+      setEditingRecordId(null);
+    } else {
+      addTreatmentHistory(selectedCustomer.id, {
+        date: recDate,
+        serviceName: recServiceName,
+        price: Number(recPrice),
+        pigmentColor: recPigment.trim(),
+        technique: recTechnique.trim(),
+        notes: recNotes.trim(),
+        beforeImage: recBeforeImage,
+        afterImage: recAfterImage,
+      });
+    }
 
     // Update locally selected customer state
     const updatedCust = customers.find((c) => c.id === selectedCustomer.id);
@@ -628,7 +655,7 @@ export const CustomerCRM: React.FC = () => {
                   </h3>
 
                   <button
-                    onClick={() => setIsAddRecordOpen(true)}
+                    onClick={handleOpenAddRecord}
                     className="px-3 py-1.5 bg-[#DF9A8C] hover:bg-[#D18475] text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -892,7 +919,7 @@ export const CustomerCRM: React.FC = () => {
           <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col border border-stone-200">
             <div className="bg-brand-900 text-white p-5 flex items-center justify-between shrink-0">
               <h3 className="font-serif-kr font-bold text-lg text-gold-300">
-                {activeCustomer.name}님 시술 차트 기록 추가
+                {activeCustomer.name}님 시술 차트 기록 {editingRecordId ? '수정' : '추가'}
               </h3>
               <button
                 onClick={() => setIsAddRecordOpen(false)}
@@ -902,7 +929,7 @@ export const CustomerCRM: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddTreatmentRecord} className="p-6 space-y-4 overflow-y-auto">
+            <form onSubmit={handleSubmitTreatmentRecord} className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-stone-700 mb-1">시술 일자</label>
@@ -1026,7 +1053,7 @@ export const CustomerCRM: React.FC = () => {
                   type="submit"
                   className="flex-1 py-3 bg-brand-900 hover:bg-brand-800 text-gold-300 font-bold rounded-xl text-xs shadow-md"
                 >
-                  차트에 기록 저장
+                  {editingRecordId ? '수정 내용 저장' : '차트에 기록 등록'}
                 </button>
               </div>
             </form>

@@ -149,8 +149,8 @@ export const ScheduleCalendar: React.FC = () => {
         customerName: newCustName.trim(),
         customerPhone: newCustPhone.trim(),
         serviceId: finalServiceId,
-        serviceName: finalServiceId === 'custom' ? combinedName : (services.find(s => s.id === finalServiceId)?.name || combinedName),
-        price: finalServiceId === 'custom' ? combinedPrice : (services.find(s => s.id === finalServiceId)?.price || combinedPrice),
+        serviceName: combinedName,
+        price: combinedPrice,
         date: newDate,
         time: newTime,
         notes: newNotes.trim(),
@@ -162,8 +162,8 @@ export const ScheduleCalendar: React.FC = () => {
         customerName: newCustName.trim(),
         customerPhone: newCustPhone.trim(),
         serviceId: finalServiceId,
-        customServiceName: finalServiceId === 'custom' ? combinedName : undefined,
-        customServicePrice: finalServiceId === 'custom' ? combinedPrice : undefined,
+        customServiceName: combinedName,
+        customServicePrice: combinedPrice,
         date: newDate,
         time: newTime,
         notes: newNotes.trim(),
@@ -1645,8 +1645,8 @@ export const ScheduleCalendar: React.FC = () => {
                         updateAppointment(selectedAppointment.id, {
                           ...selectedAppointment,
                           serviceId: finalServiceId,
-                          serviceName: finalServiceId === 'custom' ? combinedName : (services.find(s => s.id === finalServiceId)?.name || combinedName),
-                          price: finalServiceId === 'custom' ? combinedPrice : (services.find(s => s.id === finalServiceId)?.price || combinedPrice),
+                          serviceName: combinedName,
+                          price: combinedPrice,
                         });
                         setIsEditing(false);
                       }}
