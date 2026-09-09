@@ -674,45 +674,6 @@ export const CustomerCRM: React.FC = () => {
                         key={item.id || idx}
                         className="p-4 rounded-2xl border border-stone-200 hover:border-brand-300 bg-stone-50/50 space-y-2 text-xs"
                       >
-                        {editingRecordId === item.id ? (
-                          <form onSubmit={handleUpdateRecord} className="space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-[10px] font-bold text-stone-700 mb-1">시술일자</label>
-                                <input type="date" required value={editRecordDate} onChange={e => setEditRecordDate(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
-                              </div>
-                              <div>
-                                <label className="block text-[10px] font-bold text-stone-700 mb-1">시술명</label>
-                                <input type="text" required value={editRecordService} onChange={e => setEditRecordService(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-[10px] font-bold text-stone-700 mb-1">결제금액</label>
-                                <input type="number" required value={editRecordPrice} onChange={e => setEditRecordPrice(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
-                              </div>
-                              <div>
-                                <label className="block text-[10px] font-bold text-stone-700 mb-1">색소 배합</label>
-                                <input type="text" value={editRecordPigment} onChange={e => setEditRecordPigment(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-[10px] font-bold text-stone-700 mb-1">기법</label>
-                                <input type="text" value={editRecordTechnique} onChange={e => setEditRecordTechnique(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
-                              </div>
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-stone-700 mb-1">특이사항/메모</label>
-                              <textarea value={editRecordNotes} onChange={e => setEditRecordNotes(e.target.value)} rows={2} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs resize-none" />
-                            </div>
-                            <div className="flex justify-end gap-2 pt-1">
-                              <button type="button" onClick={() => setEditingRecordId(null)} className="px-3 py-1.5 bg-stone-100 text-stone-600 hover:bg-stone-200 rounded-lg text-xs font-bold transition-colors">취소</button>
-                              <button type="submit" className="px-3 py-1.5 bg-brand-900 text-white hover:bg-brand-800 rounded-lg text-xs font-bold transition-colors">저장</button>
-                            </div>
-                          </form>
-                        ) : (
-                          <>
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-brand-900 text-sm">
@@ -774,8 +735,6 @@ export const CustomerCRM: React.FC = () => {
                               </div>
                             )}
                           </div>
-                        )}
-                          </>
                         )}
                       </div>
                     ))
@@ -922,7 +881,7 @@ export const CustomerCRM: React.FC = () => {
                 {activeCustomer.name}님 시술 차트 기록 {editingRecordId ? '수정' : '추가'}
               </h3>
               <button
-                onClick={() => setIsAddRecordOpen(false)}
+                onClick={() => { setIsAddRecordOpen(false); setEditingRecordId(null); }}
                 className="text-stone-300 hover:text-white p-1"
               >
                 <X className="w-5 h-5" />
@@ -1044,7 +1003,7 @@ export const CustomerCRM: React.FC = () => {
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsAddRecordOpen(false)}
+                  onClick={() => { setIsAddRecordOpen(false); setEditingRecordId(null); }}
                   className="flex-1 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-bold"
                 >
                   취소
