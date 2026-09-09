@@ -56,6 +56,8 @@ export interface AppStore {
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
   deleteCustomer: (id: string) => void;
   addTreatmentHistory: (customerId: string, record: Omit<TreatmentHistoryItem, 'id'>) => void;
+  updateTreatmentHistory: (customerId: string, historyId: string, record: Partial<TreatmentHistoryItem>) => void;
+  deleteTreatmentHistory: (customerId: string, historyId: string) => void;
   
   appointments: Appointment[];
   createAppointment: (data: {
@@ -245,7 +247,48 @@ export const useAppStore = create<AppStore>((set, get) => {
           return c;
         }),
       }));
-      get().showToast('시술 기록 등록', '디지털 고객 차트에 시술 이력이 저장되었습니다.', 'success');
+      get().showToast('시술 기록 등록', '해당 고객 차트에 시술 이력이 추가되었습니다.', 'success');
+    },
+    updateTreatmentHistory: (customerId, historyId, recordUpdates) => {
+      set((state) => ({
+        customers: state.customers.map((c) => {
+          if (c.id === customerId) {
+            let priceDiff = 0;
+            const updatedHistory = c.history.map((h) => {
+              if (h.id === historyId) {
+                if (recordUpdates.price !== undefined) priceDiff = recordUpdates.price - h.price;
+                return { ...h, ...recordUpdates };
+              }
+              return h;
+            });
+            return {
+              ...c,
+              totalSpent: c.totalSpent + priceDiff,
+              history: updatedHistory,
+            };
+          }
+          return c;
+        }),
+      }));
+      get().showToast('시술 기록 수정', '시술 이력이 수정되었습니다.', 'success');
+    },
+    deleteTreatmentHistory: (customerId, historyId) => {
+      set((state) => ({
+        customers: state.customers.map((c) => {
+          if (c.id === customerId) {
+            const historyToDelete = c.history.find(h => h.id === historyId);
+            const priceToSubtract = historyToDelete ? historyToDelete.price : 0;
+            return {
+              ...c,
+              totalVisits: Math.max(0, c.totalVisits - 1),
+              totalSpent: Math.max(0, c.totalSpent - priceToSubtract),
+              history: c.history.filter((h) => h.id !== historyId),
+            };
+          }
+          return c;
+        }),
+      }));
+      get().showToast('시술 기록 삭제', '시술 이력이 삭제되었습니다.', 'success');
     },
 
     appointments: getInitialAppointments(),

@@ -34,6 +34,8 @@ export const CustomerCRM: React.FC = () => {
     updateCustomer,
     deleteCustomer,
     addTreatmentHistory,
+    updateTreatmentHistory,
+    deleteTreatmentHistory,
     services,
     shopConfig,
     showToast,
@@ -57,6 +59,24 @@ export const CustomerCRM: React.FC = () => {
   const [newSkinType, setNewSkinType] = useState('');
   const [newAllergies, setNewAllergies] = useState('');
   const [newMemo, setNewMemo] = useState('');
+
+  const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
+  const [recordService, setRecordService] = useState('');
+  const [recordPrice, setRecordPrice] = useState('');
+  const [recordPigment, setRecordPigment] = useState('');
+  const [recordTechnique, setRecordTechnique] = useState('');
+  const [recordNotes, setRecordNotes] = useState('');
+  const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+
+  // Edit Treatment Record Form
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [editRecordDate, setEditRecordDate] = useState('');
+  const [editRecordService, setEditRecordService] = useState('');
+  const [editRecordPrice, setEditRecordPrice] = useState('');
+  const [editRecordPigment, setEditRecordPigment] = useState('');
+  const [editRecordTechnique, setEditRecordTechnique] = useState('');
+  const [editRecordNotes, setEditRecordNotes] = useState('');
+  const [showEditServiceDropdown, setShowEditServiceDropdown] = useState(false);
 
   // Edit Customer Form
   const [editName, setEditName] = useState('');
@@ -119,6 +139,39 @@ export const CustomerCRM: React.FC = () => {
   const [recBeforeImage, setRecBeforeImage] = useState('');
   const [recAfterImage, setRecAfterImage] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const startEditingRecord = (item: TreatmentHistoryItem) => {
+    setEditingRecordId(item.id);
+    setEditRecordDate(item.date);
+    setEditRecordService(item.serviceName);
+    setEditRecordPrice(item.price.toString());
+    setEditRecordPigment(item.pigmentColor || '');
+    setEditRecordTechnique(item.technique || '');
+    setEditRecordNotes(item.notes || '');
+  };
+
+  const handleUpdateRecord = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCustomer || !editingRecordId) return;
+
+    updateTreatmentHistory(activeCustomer.id, editingRecordId, {
+      date: editRecordDate,
+      serviceName: editRecordService,
+      price: parseInt(editRecordPrice) || 0,
+      pigmentColor: editRecordPigment.trim(),
+      technique: editRecordTechnique.trim(),
+      notes: editRecordNotes.trim(),
+    });
+
+    setEditingRecordId(null);
+  };
+
+  const handleDeleteRecord = (historyId: string, serviceName: string) => {
+    if (!activeCustomer) return;
+    if (window.confirm(`정말 '${serviceName}' 시술 기록을 삭제하시겠습니까?`)) {
+      deleteTreatmentHistory(activeCustomer.id, historyId);
+    }
+  };
 
   // Filtering
   const filteredCustomers = customers.filter((c) => {
@@ -594,17 +647,66 @@ export const CustomerCRM: React.FC = () => {
                         key={item.id || idx}
                         className="p-4 rounded-2xl border border-stone-200 hover:border-brand-300 bg-stone-50/50 space-y-2 text-xs"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-brand-900 text-sm">
-                              {item.serviceName}
-                            </span>
-                            <span className="font-mono text-stone-500">{item.date}</span>
-                          </div>
-                          <span className="font-mono font-bold text-stone-900">
-                            {formatCurrency(item.price)}
-                          </span>
-                        </div>
+                        {editingRecordId === item.id ? (
+                          <form onSubmit={handleUpdateRecord} className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[10px] font-bold text-stone-700 mb-1">시술일자</label>
+                                <input type="date" required value={editRecordDate} onChange={e => setEditRecordDate(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-bold text-stone-700 mb-1">시술명</label>
+                                <input type="text" required value={editRecordService} onChange={e => setEditRecordService(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[10px] font-bold text-stone-700 mb-1">결제금액</label>
+                                <input type="number" required value={editRecordPrice} onChange={e => setEditRecordPrice(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-bold text-stone-700 mb-1">색소 배합</label>
+                                <input type="text" value={editRecordPigment} onChange={e => setEditRecordPigment(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[10px] font-bold text-stone-700 mb-1">기법</label>
+                                <input type="text" value={editRecordTechnique} onChange={e => setEditRecordTechnique(e.target.value)} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs" />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-stone-700 mb-1">특이사항/메모</label>
+                              <textarea value={editRecordNotes} onChange={e => setEditRecordNotes(e.target.value)} rows={2} className="w-full px-2 py-1.5 border border-stone-300 rounded-lg text-xs resize-none" />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-1">
+                              <button type="button" onClick={() => setEditingRecordId(null)} className="px-3 py-1.5 bg-stone-100 text-stone-600 hover:bg-stone-200 rounded-lg text-xs font-bold transition-colors">취소</button>
+                              <button type="submit" className="px-3 py-1.5 bg-brand-900 text-white hover:bg-brand-800 rounded-lg text-xs font-bold transition-colors">저장</button>
+                            </div>
+                          </form>
+                        ) : (
+                          <>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-brand-900 text-sm">
+                                  {item.serviceName}
+                                </span>
+                                <span className="font-mono text-stone-500">{item.date}</span>
+                              </div>
+                              <div className="flex items-center gap-3 justify-between sm:justify-end">
+                                <span className="font-mono font-bold text-stone-900 text-sm">
+                                  {formatCurrency(item.price)}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <button onClick={() => startEditingRecord(item)} className="p-1.5 text-stone-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors border border-transparent hover:border-brand-200" title="수정">
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button onClick={() => handleDeleteRecord(item.id, item.serviceName)} className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200" title="삭제">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
 
                         {item.pigmentColor && (
                           <div className="bg-white p-2 rounded-xl border border-stone-200/80 text-stone-700">
@@ -645,6 +747,8 @@ export const CustomerCRM: React.FC = () => {
                               </div>
                             )}
                           </div>
+                        )}
+                          </>
                         )}
                       </div>
                     ))
