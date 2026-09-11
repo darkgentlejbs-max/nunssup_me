@@ -1,0 +1,1 @@
+{ short_name: 传界固, name: 传界 : 固 诙, icons: [ { src: icon.svg, type: image/svg+xml, sizes: 512x512 } ], start_url: ., display: standalone, theme_color: #FAF7F2, background_color: #FAF7F2 }
