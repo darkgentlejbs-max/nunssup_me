@@ -599,7 +599,7 @@ export const CustomerCRM: React.FC = () => {
                 <span className="text-xs font-bold text-amber-900 block mb-1">
                   💡 원장님 고객 취향 & 맞춤 디자인 메모
                 </span>
-                <p className="text-xs text-stone-700 leading-relaxed">
+                <p className="text-xs text-stone-700 leading-relaxed whitespace-pre-wrap">
                   {activeCustomer.memo || '등록된 메모가 없습니다.'}
                 </p>
               </div>
@@ -711,7 +711,7 @@ export const CustomerCRM: React.FC = () => {
                         )}
 
                         {item.notes && (
-                          <p className="text-stone-600 bg-white/70 p-2 rounded-xl border border-stone-100">
+                          <p className="text-stone-600 bg-white/70 p-2 rounded-xl border border-stone-100 whitespace-pre-wrap">
                             {item.notes}
                           </p>
                         )}

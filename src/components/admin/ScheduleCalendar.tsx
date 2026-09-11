@@ -1161,7 +1161,7 @@ export const ScheduleCalendar: React.FC = () => {
                   시술 메모 / 요청사항
                 </label>
                 <textarea
-                  rows={2}
+                  rows={4}
                   value={newNotes}
                   onChange={(e) => setNewNotes(e.target.value)}
                   placeholder="예: 전화로 리터치 예약 접수됨"
@@ -1357,7 +1357,7 @@ export const ScheduleCalendar: React.FC = () => {
                     {selectedAppointment.notes && (
                       <div className="pt-2 border-t border-stone-200">
                         <span className="text-stone-500">고객 메모:</span>
-                        <p className="font-medium text-stone-800 mt-0.5">{selectedAppointment.notes}</p>
+                        <p className="font-medium text-stone-800 mt-0.5 whitespace-pre-wrap">{selectedAppointment.notes}</p>
                       </div>
                     )}
                   </div>
@@ -1617,7 +1617,7 @@ export const ScheduleCalendar: React.FC = () => {
                       value={selectedAppointment.notes || ''}
                       onChange={(e) => setSelectedAppointment({ ...selectedAppointment, notes: e.target.value })}
                       className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
-                      rows={2}
+                      rows={4}
                     />
                   </div>
                   <div className="flex gap-2 pt-2">
