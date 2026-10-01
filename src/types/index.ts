@@ -46,6 +46,8 @@ export interface TreatmentHistoryItem {
   technique?: string; // e.g. 엠보 결 + 머신 섀도우
   beforeImage?: string;
   afterImage?: string;
+  beforeImages?: string[]; // 다중 시술 전 사진
+  afterImages?: string[]; // 다중 시술 후 사진
 }
 
 export interface Customer {

@@ -136,8 +136,8 @@ export const CustomerCRM: React.FC = () => {
   const [recPigment, setRecPigment] = useState('');
   const [recTechnique, setRecTechnique] = useState('');
   const [recNotes, setRecNotes] = useState('');
-  const [recBeforeImage, setRecBeforeImage] = useState('');
-  const [recAfterImage, setRecAfterImage] = useState('');
+  const [recBeforeImages, setRecBeforeImages] = useState<string[]>([]);
+  const [recAfterImages, setRecAfterImages] = useState<string[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const handleOpenAddRecord = () => {
@@ -148,8 +148,8 @@ export const CustomerCRM: React.FC = () => {
     setRecPigment('');
     setRecTechnique('');
     setRecNotes('');
-    setRecBeforeImage('');
-    setRecAfterImage('');
+    setRecBeforeImages([]);
+    setRecAfterImages([]);
     setIsAddRecordOpen(true);
   };
 
@@ -161,8 +161,14 @@ export const CustomerCRM: React.FC = () => {
     setRecPigment(item.pigmentColor || '');
     setRecTechnique(item.technique || '');
     setRecNotes(item.notes || '');
-    setRecBeforeImage(item.beforeImage || '');
-    setRecAfterImage(item.afterImage || '');
+    const bImgs = item.beforeImages && item.beforeImages.length > 0 
+      ? item.beforeImages 
+      : (item.beforeImage ? [item.beforeImage] : []);
+    const aImgs = item.afterImages && item.afterImages.length > 0 
+      ? item.afterImages 
+      : (item.afterImage ? [item.afterImage] : []);
+    setRecBeforeImages(bImgs);
+    setRecAfterImages(aImgs);
     setIsAddRecordOpen(true);
   };
 
@@ -224,22 +230,40 @@ export const CustomerCRM: React.FC = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'before' | 'after') => {
     if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
+    const files = Array.from(e.target.files);
     
     setIsUploadingImage(true);
-    const { url, error } = await uploadImageToCloud(file);
+    const uploadedUrls: string[] = [];
+
+    for (const file of files) {
+      const { url, error } = await uploadImageToCloud(file);
+      if (url) {
+        uploadedUrls.push(url);
+      } else {
+        // Fallback: If cloud fails or is offline, convert to base64 so photo is preserved
+        await new Promise<void>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const base64 = event.target?.result as string;
+            if (base64) uploadedUrls.push(base64);
+            resolve();
+          };
+          reader.onerror = () => resolve();
+          reader.readAsDataURL(file);
+        });
+      }
+    }
     setIsUploadingImage(false);
 
-    if (error) {
-      showToast('업로드 실패', error, 'error');
-      return;
+    if (uploadedUrls.length > 0) {
+      if (type === 'before') {
+        setRecBeforeImages((prev) => [...prev, ...uploadedUrls]);
+      } else {
+        setRecAfterImages((prev) => [...prev, ...uploadedUrls]);
+      }
+      showToast('사진 첨부 완료', `${uploadedUrls.length}장의 사진이 추가되었습니다.`, 'success');
     }
-
-    if (url) {
-      if (type === 'before') setRecBeforeImage(url);
-      else setRecAfterImage(url);
-      showToast('업로드 성공', '사진이 성공적으로 첨부되었습니다.', 'success');
-    }
+    e.target.value = '';
   };
 
   const handleSubmitTreatmentRecord = (e: React.FormEvent) => {
@@ -254,8 +278,10 @@ export const CustomerCRM: React.FC = () => {
         pigmentColor: recPigment.trim(),
         technique: recTechnique.trim(),
         notes: recNotes.trim(),
-        beforeImage: recBeforeImage,
-        afterImage: recAfterImage,
+        beforeImages: recBeforeImages,
+        afterImages: recAfterImages,
+        beforeImage: recBeforeImages[0] || '',
+        afterImage: recAfterImages[0] || '',
       });
       setEditingRecordId(null);
     } else {
@@ -266,8 +292,10 @@ export const CustomerCRM: React.FC = () => {
         pigmentColor: recPigment.trim(),
         technique: recTechnique.trim(),
         notes: recNotes.trim(),
-        beforeImage: recBeforeImage,
-        afterImage: recAfterImage,
+        beforeImages: recBeforeImages,
+        afterImages: recAfterImages,
+        beforeImage: recBeforeImages[0] || '',
+        afterImage: recAfterImages[0] || '',
       });
     }
 
@@ -280,8 +308,8 @@ export const CustomerCRM: React.FC = () => {
     setRecNotes('');
     setRecPigment('');
     setRecTechnique('');
-    setRecBeforeImage('');
-    setRecAfterImage('');
+    setRecBeforeImages([]);
+    setRecAfterImages([]);
   };
 
   const copyToClipboard = (text: string, templateKey: string) => {
@@ -716,26 +744,67 @@ export const CustomerCRM: React.FC = () => {
                           </p>
                         )}
 
-                        {(item.beforeImage || item.afterImage) && (
-                          <div className="grid grid-cols-2 gap-2 mt-2">
-                            {item.beforeImage && (
-                              <div>
-                                <span className="block text-[10px] text-stone-500 mb-1 font-bold">Before</span>
-                                <a href={item.beforeImage} target="_blank" rel="noreferrer">
-                                  <img src={item.beforeImage} alt="Before" className="w-full h-24 sm:h-32 object-cover rounded-xl border border-stone-200 hover:opacity-90 transition-opacity" />
-                                </a>
-                              </div>
-                            )}
-                            {item.afterImage && (
-                              <div>
-                                <span className="block text-[10px] text-stone-500 mb-1 font-bold">After</span>
-                                <a href={item.afterImage} target="_blank" rel="noreferrer">
-                                  <img src={item.afterImage} alt="After" className="w-full h-24 sm:h-32 object-cover rounded-xl border border-stone-200 hover:opacity-90 transition-opacity" />
-                                </a>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        {(() => {
+                          const beforeList = item.beforeImages && item.beforeImages.length > 0 
+                            ? item.beforeImages 
+                            : (item.beforeImage ? [item.beforeImage] : []);
+                          const afterList = item.afterImages && item.afterImages.length > 0 
+                            ? item.afterImages 
+                            : (item.afterImage ? [item.afterImage] : []);
+
+                          if (beforeList.length === 0 && afterList.length === 0) return null;
+
+                          return (
+                            <div className="space-y-3 mt-3 pt-2.5 border-t border-stone-100">
+                              {beforeList.length > 0 && (
+                                <div>
+                                  <span className="text-[11px] text-stone-600 mb-1.5 font-bold flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-stone-400"></span>
+                                    <span>시술 전 (Before)</span>
+                                    <span className="text-[10px] font-mono text-stone-400 font-normal">({beforeList.length}장)</span>
+                                  </span>
+                                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                    {beforeList.map((url, idx) => (
+                                      <a
+                                        key={idx}
+                                        href={url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="block aspect-square group relative rounded-xl overflow-hidden border border-stone-200 bg-stone-100 shadow-sm"
+                                        title="클릭하여 원본 사진 보기"
+                                      >
+                                        <img src={url} alt={`Before ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {afterList.length > 0 && (
+                                <div>
+                                  <span className="text-[11px] text-brand-900 mb-1.5 font-bold flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-brand-600"></span>
+                                    <span>시술 후 (After)</span>
+                                    <span className="text-[10px] font-mono text-brand-700 font-normal">({afterList.length}장)</span>
+                                  </span>
+                                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                    {afterList.map((url, idx) => (
+                                      <a
+                                        key={idx}
+                                        href={url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="block aspect-square group relative rounded-xl overflow-hidden border border-brand-200 bg-stone-100 shadow-sm"
+                                        title="클릭하여 원본 사진 보기"
+                                      >
+                                        <img src={url} alt={`After ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))
                   )}
@@ -962,41 +1031,83 @@ export const CustomerCRM: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">시술 전 사진</label>
-                  {recBeforeImage ? (
-                    <div className="relative group rounded-xl overflow-hidden border border-stone-200">
-                      <img src={recBeforeImage} alt="시술 전" className="w-full h-24 object-cover" />
-                      <button type="button" onClick={() => setRecBeforeImage('')} className="absolute inset-0 bg-stone-900/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-stone-300 rounded-xl cursor-pointer hover:bg-stone-50 hover:border-brand-300 transition-colors">
-                      {isUploadingImage ? <Loader2 className="w-5 h-5 text-brand-500 animate-spin" /> : <ImagePlus className="w-5 h-5 text-stone-400" />}
-                      <span className="text-[10px] text-stone-500 mt-1 font-bold">사진 첨부</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'before')} />
+              <div className="space-y-4 pt-2">
+                {/* 시술 전 사진 다중 업로드 */}
+                <div className="p-3 bg-stone-50/80 rounded-2xl border border-stone-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
+                      <span>시술 전 사진 (Before)</span>
+                      <span className="text-[10px] font-mono text-stone-600 bg-stone-200/80 px-1.5 py-0.5 rounded-full font-bold">
+                        {recBeforeImages.length}장
+                      </span>
                     </label>
-                  )}
+                    <span className="text-[10px] text-stone-400 font-medium">여러 장 선택 가능</span>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {recBeforeImages.map((imgUrl, idx) => (
+                      <div key={idx} className="relative group rounded-xl overflow-hidden border border-stone-200 aspect-square bg-stone-100">
+                        <img src={imgUrl} alt={`전-${idx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setRecBeforeImages(prev => prev.filter((_, i) => i !== idx))}
+                          className="absolute top-1 right-1 bg-stone-900/80 hover:bg-rose-600 text-white rounded-full p-1 transition-colors shadow-sm"
+                          title="사진 삭제"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-stone-300 rounded-xl cursor-pointer hover:bg-white hover:border-brand-400 transition-colors bg-white/60">
+                      {isUploadingImage ? <Loader2 className="w-5 h-5 text-brand-500 animate-spin" /> : <ImagePlus className="w-5 h-5 text-stone-400" />}
+                      <span className="text-[10px] text-stone-500 mt-1 font-bold">+ 사진 추가</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e, 'before')}
+                      />
+                    </label>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">시술 후 사진</label>
-                  {recAfterImage ? (
-                    <div className="relative group rounded-xl overflow-hidden border border-stone-200">
-                      <img src={recAfterImage} alt="시술 후" className="w-full h-24 object-cover" />
-                      <button type="button" onClick={() => setRecAfterImage('')} className="absolute inset-0 bg-stone-900/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-stone-300 rounded-xl cursor-pointer hover:bg-stone-50 hover:border-brand-300 transition-colors">
-                      {isUploadingImage ? <Loader2 className="w-5 h-5 text-brand-500 animate-spin" /> : <ImagePlus className="w-5 h-5 text-stone-400" />}
-                      <span className="text-[10px] text-stone-500 mt-1 font-bold">사진 첨부</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'after')} />
+                {/* 시술 후 사진 다중 업로드 */}
+                <div className="p-3 bg-brand-50/40 rounded-2xl border border-brand-200/70">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-brand-950 flex items-center gap-1.5">
+                      <span>시술 후 사진 (After)</span>
+                      <span className="text-[10px] font-mono text-brand-800 bg-brand-200/80 px-1.5 py-0.5 rounded-full font-bold">
+                        {recAfterImages.length}장
+                      </span>
                     </label>
-                  )}
+                    <span className="text-[10px] text-stone-400 font-medium">여러 장 선택 가능</span>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {recAfterImages.map((imgUrl, idx) => (
+                      <div key={idx} className="relative group rounded-xl overflow-hidden border border-brand-200 aspect-square bg-stone-100">
+                        <img src={imgUrl} alt={`후-${idx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setRecAfterImages(prev => prev.filter((_, i) => i !== idx))}
+                          className="absolute top-1 right-1 bg-stone-900/80 hover:bg-rose-600 text-white rounded-full p-1 transition-colors shadow-sm"
+                          title="사진 삭제"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-brand-300 rounded-xl cursor-pointer hover:bg-white hover:border-brand-500 transition-colors bg-white/60">
+                      {isUploadingImage ? <Loader2 className="w-5 h-5 text-brand-500 animate-spin" /> : <ImagePlus className="w-5 h-5 text-brand-600" />}
+                      <span className="text-[10px] text-brand-800 mt-1 font-bold">+ 사진 추가</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e, 'after')}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
 

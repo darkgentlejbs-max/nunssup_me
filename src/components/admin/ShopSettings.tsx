@@ -621,7 +621,11 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
             <div>
               <p className="font-bold text-sm">
                 {cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey
-                  ? (cloudSyncStatus === 'syncing' ? '⚡ 실시간 데이터 동기화 중...' : '🟢 Supabase 클라우드 실시간 동기화 활성')
+                  ? cloudSyncStatus === 'syncing'
+                    ? '⚡ 실시간 데이터 동기화 중...'
+                    : cloudSyncStatus === 'offline'
+                    ? '🔴 DB 연결 끊김 (프로젝트 일시정지 또는 오프라인)'
+                    : '🟢 Supabase 클라우드 실시간 동기화 활성'
                   : '⚠️ Supabase URL과 Key를 입력하여 클라우드 DB를 연결해 주세요.'}
               </p>
               <p className="text-[11px] opacity-80 mt-0.5">
@@ -635,7 +639,11 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
               ? 'bg-emerald-200/80 border-emerald-300 text-emerald-900'
               : 'bg-amber-200/80 border-amber-300 text-amber-900'
           }`}>
-            {cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey ? 'PC ↔ 스마트폰 자동 연결됨' : '설정 필요'}
+            {cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey
+              ? cloudSyncStatus === 'offline'
+                ? '연결 끊김 / 복원 필요'
+                : 'PC ↔ 스마트폰 자동 연결됨'
+              : '설정 필요'}
           </span>
         </div>
 

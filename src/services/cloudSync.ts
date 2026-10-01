@@ -109,6 +109,12 @@ export const pushDataToCloud = async (
     );
 
     if (error) {
+      if (error.message.includes('paused') || error.message.includes('The project is paused')) {
+        return {
+          success: false,
+          message: '⚠️ Supabase 무료 프로젝트가 7일간 미사용으로 인해 [일시 정지(Paused)] 상태입니다. Supabase 대시보드(https://supabase.com/dashboard/project/vehvndduipgzjnksbdit)에 로그인 후 [Restore project]를 눌러 활성화해 주세요.',
+        };
+      }
       if (error.message.includes('relation "nunssup_store_data" does not exist')) {
         return {
           success: false,
@@ -190,6 +196,12 @@ export const testCloudConnection = async (
       .limit(1);
 
     if (error) {
+      if (error.message.includes('paused') || error.message.includes('The project is paused')) {
+        return {
+          success: false,
+          message: '⚠️ Supabase 무료 프로젝트가 7일간 미접속으로 인해 [일시 정지(Paused)]되었습니다! Supabase 대시보드(https://supabase.com/dashboard/project/vehvndduipgzjnksbdit)에 접속하셔서 [Restore project] 버튼을 누르시면 1~2분 내로 정상 복원됩니다.',
+        };
+      }
       if (error.message.includes('relation "nunssup_store_data" does not exist') || error.code === '42P01') {
         return {
           success: false,
@@ -204,7 +216,14 @@ export const testCloudConnection = async (
       message: `Supabase 데이터베이스 연결 성공! 🎉 채널 [${channel}]을 통해 PC ↔ 스마트폰 실시간 연동이 활성화되었습니다.`,
     };
   } catch (e: any) {
-    return { success: false, message: `연결 실패: ${e.message || e}` };
+    const msg = e.message || String(e);
+    if (msg.includes('paused') || msg.includes('The project is paused')) {
+      return {
+        success: false,
+        message: '⚠️ Supabase 무료 프로젝트가 7일간 미접속으로 인해 [일시 정지(Paused)]되었습니다! Supabase 대시보드(https://supabase.com/dashboard/project/vehvndduipgzjnksbdit)에서 [Restore project]를 눌러주세요.',
+      };
+    }
+    return { success: false, message: `연결 실패: ${msg}` };
   }
 };
 
