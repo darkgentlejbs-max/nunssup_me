@@ -125,9 +125,9 @@ export const Header: React.FC = () => {
             {cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey ? (
               <button
                 type="button"
-                onClick={() => syncWithCloud()}
+                onClick={() => syncWithCloud(false)}
                 title={`Supabase 클라우드 동기화 (클릭하여 즉시 동기화)`}
-                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-brand-950/80 border border-emerald-500/50 text-[11px] text-stone-200 hover:text-white transition-colors"
+                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-brand-950/80 border border-emerald-500/50 text-[11px] text-stone-200 hover:text-white transition-colors"
               >
                 {cloudSyncStatus === 'syncing' ? (
                   <RefreshCw className="w-3.5 h-3.5 text-gold-400 animate-spin" />
@@ -136,7 +136,7 @@ export const Header: React.FC = () => {
                 ) : (
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 )}
-                <span className="font-mono text-[10px] text-emerald-300">
+                <span className="font-mono text-[10px] text-emerald-300 hidden sm:inline">
                   {cloudSyncStatus === 'syncing'
                     ? '동기화 중...'
                     : cloudSyncStatus === 'offline'
@@ -144,6 +144,13 @@ export const Header: React.FC = () => {
                     : lastSyncedAt
                     ? `Supabase ${lastSyncedAt}`
                     : 'Supabase 연결됨'}
+                </span>
+                <span className="font-mono text-[10px] text-emerald-300 sm:hidden">
+                  {cloudSyncStatus === 'syncing'
+                    ? '동기화'
+                    : cloudSyncStatus === 'offline'
+                    ? '오프라인'
+                    : 'DB연결'}
                 </span>
               </button>
             ) : null}

@@ -2,24 +2,24 @@ import { ShopConfig, ServiceItem, Customer, Appointment, TimeBlock } from '../ty
 
 export const initialShopConfig: ShopConfig = {
   name: '눈썹 : 미 眉',
-  subtitle: 'LASH & BROW',
+  subtitle: 'nunssup_me',
   instagram: '@nunssup_me',
   phone: '010.3797.7721',
   address: '전남광주통합특별시 여수시 문수로 148, 1층(문수동)',
-  weekdayHours: { start: '10:30', end: '19:00' }, // Legacy
-  weekendHours: { start: '10:30', end: '21:00' }, // Legacy
+  weekdayHours: { start: '10:00', end: '19:00' },
+  weekendHours: { start: '10:00', end: '21:00' },
   dayHours: [
-    { start: '10:30', end: '19:00' }, // 0: Sun (closed by default)
-    { start: '10:30', end: '19:00' }, // 1: Mon
-    { start: '10:30', end: '19:00' }, // 2: Tue
-    { start: '10:30', end: '19:00' }, // 3: Wed
-    { start: '10:30', end: '21:00' }, // 4: Thu
-    { start: '10:30', end: '21:00' }, // 5: Fri
-    { start: '10:30', end: '21:00' }, // 6: Sat
+    { start: '10:00', end: '19:00' }, // 0: Sun
+    { start: '10:00', end: '19:00' }, // 1: Mon
+    { start: '10:00', end: '19:00' }, // 2: Tue (closed by default)
+    { start: '10:00', end: '19:00' }, // 3: Wed
+    { start: '10:00', end: '21:00' }, // 4: Thu
+    { start: '10:00', end: '21:00' }, // 5: Fri
+    { start: '10:00', end: '21:00' }, // 6: Sat
   ],
-  closedDays: [0], // 0 = 일요일 휴무 (일요일은 쉬어요:))
+  closedDays: [2], // 2 = 화요일 휴무
   slotIntervalMinutes: 30,
-  notice: '100% 예약제 운영중 입니다. 부재 시 문자 남겨주세요 :)',
+  notice: '100% 예약제 운영 중입니다. 당일 예약 및 상담 문의는 부재 시 문자를 남겨주시면 시술 후 순차적으로 연락드립니다.',
   depositAmount: 20000,
   bankInfo: '카카오뱅크 3333-01-2345678 (예금주: 눈썹미)',
   adminPin: '7721', // 전화번호 뒷 4자리
@@ -30,7 +30,7 @@ export const initialServices: ServiceItem[] = [
     id: 'srv-1',
     name: '여자 자연눈썹 (엠보)',
     category: '눈썹',
-    price: 150000,
+    price: 160000,
     durationMinutes: 90,
     description: '본인 눈썹 결을 한 올 한 올 살려 원래 내 눈썹처럼 자연스러운 결을 완성하는 시그니처 시술',
     recommendedFor: '모량이 적당하고 자연스러운 쌩얼 눈썹을 원하시는 분',
@@ -52,7 +52,7 @@ export const initialServices: ServiceItem[] = [
     id: 'srv-3',
     name: '남자 맞춤 결눈썹',
     category: '눈썹',
-    price: 160000,
+    price: 180000,
     durationMinutes: 90,
     description: '남성 골격과 눈썹 근육의 움직임에 맞춘 티 나지 않는 또렷하고 단정한 맨즈 텍스처 디자인',
     recommendedFor: '인상이 흐릿해 보이거나 면접/웨딩을 앞두신 남성분',
@@ -63,8 +63,8 @@ export const initialServices: ServiceItem[] = [
     id: 'srv-4',
     name: '무통 점막 아이라인',
     category: '아이라인',
-    price: 130000,
-    durationMinutes: 60,
+    price: 120000,
+    durationMinutes: 90,
     description: '속눈썹 사이사이 점막을 꼼꼼히 채워 붓기 없이 또렷하고 깊이 있는 눈매를 연출',
     recommendedFor: '아이라인 그리기 번거롭거나 점막이 들려 보이는 분',
     tag: '통증 최소화',
@@ -74,7 +74,7 @@ export const initialServices: ServiceItem[] = [
     id: 'srv-5',
     name: '생기 틴트 입술 (립 블러셔)',
     category: '입술',
-    price: 220000,
+    price: 250000,
     durationMinutes: 120,
     description: '어둡고 칙칙한 입술 톤을 보정하고 화사한 수채화 물광 틴트 발색을 선사하는 립 디자인',
     recommendedFor: '입술에 생기가 없거나 입술 라인이 불분명한 분',
@@ -96,8 +96,8 @@ export const initialServices: ServiceItem[] = [
     id: 'srv-7',
     name: '블랙 케라틴 영양 속눈썹 펌',
     category: '속눈썹',
-    price: 45000,
-    durationMinutes: 50,
+    price: 40000,
+    durationMinutes: 60,
     description: '고농축 케라틴 영양제와 블랙 틴팅으로 속눈썹 손상 없이 바짝 올라가는 또렷한 C/L컬 펌',
     recommendedFor: '뷰러를 해도 금방 처지거나 잦은 마스카라가 번거로운 분',
     tag: '재예약률 95%',
@@ -108,15 +108,78 @@ export const initialServices: ServiceItem[] = [
     name: '프리미엄 볼륨 속눈썹 연장',
     category: '속눈썹',
     price: 65000,
-    durationMinutes: 70,
+    durationMinutes: 90,
     description: '초경량 프리미엄 플랫모로 이물감 없이 풍성하고 그윽한 인형 눈매 완성',
     recommendedFor: '풍성한 볼륨감과 화려한 눈매를 선호하시는 분',
     tag: '이물감 Zero',
     popular: false,
   },
+  {
+    id: 'srv-1788004607592',
+    name: '노글루펌',
+    category: '속눈썹',
+    price: 35000,
+    durationMinutes: 60,
+    description: '',
+    recommendedFor: '',
+  },
+  {
+    id: 'srv-1788004635526',
+    name: '클래식연장',
+    category: '속눈썹',
+    price: 45000,
+    durationMinutes: 90,
+    description: '',
+    recommendedFor: '',
+  },
+  {
+    id: 'srv-1788360793390',
+    name: '펌+영양제',
+    category: '속눈썹',
+    price: 70000,
+    durationMinutes: 60,
+    description: '',
+    recommendedFor: '',
+  },
+  {
+    id: 'srv-1788433977218',
+    name: '포인트연장',
+    category: '속눈썹',
+    price: 55000,
+    durationMinutes: 90,
+    description: '',
+    recommendedFor: '',
+  },
+  {
+    id: 'srv-1788501048574',
+    name: '연장리터치',
+    category: '눈썹',
+    price: 30000,
+    durationMinutes: 60,
+    description: '원장님 수동 추가 시술',
+    recommendedFor: '모든 고객',
+  },
+  {
+    id: 'srv-1788569399997',
+    name: '바비래쉬',
+    category: '눈썹',
+    price: 55000,
+    durationMinutes: 90,
+    description: '원장님 수동 추가 시술',
+    recommendedFor: '모든 고객',
+  },
+  {
+    id: 'srv-1789548402865',
+    name: 'YY래쉬',
+    category: '눈썹',
+    price: 45000,
+    durationMinutes: 60,
+    description: '원장님 수동 추가 시술',
+    recommendedFor: '모든 고객',
+  },
 ];
 
-// Clean Operational Initial Data (Starts clean for real store bookings)
+// Clean Operational Initial Data (Starts clean for real store bookings; hydrated from Supabase)
 export const initialCustomers: Customer[] = [];
 export const initialAppointments: Appointment[] = [];
 export const initialTimeBlocks: TimeBlock[] = [];
@@ -176,8 +239,8 @@ export const sampleAppointments: Appointment[] = [
     customerPhone: '010-2345-6789',
     serviceId: 'srv-7',
     serviceName: '블랙 케라틴 영양 속눈썹 펌',
-    price: 45000,
-    durationMinutes: 50,
+    price: 40000,
+    durationMinutes: 60,
     date: getTodayStr(0),
     time: '11:00',
     status: 'confirmed',
@@ -192,7 +255,7 @@ export const sampleAppointments: Appointment[] = [
     customerPhone: '010-8765-4321',
     serviceId: 'srv-3',
     serviceName: '남자 맞춤 결눈썹',
-    price: 160000,
+    price: 180000,
     durationMinutes: 90,
     date: getTodayStr(0),
     time: '14:00',

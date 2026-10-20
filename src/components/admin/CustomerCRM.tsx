@@ -236,9 +236,11 @@ export const CustomerCRM: React.FC = () => {
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
-      const { url, error } = await uploadImageToCloud(file);
+      const { url, fallbackDataUrl } = await uploadImageToCloud(file);
       if (url) {
         uploadedUrls.push(url);
+      } else if (fallbackDataUrl) {
+        uploadedUrls.push(fallbackDataUrl);
       } else {
         // Fallback: If cloud fails or is offline, convert to base64 so photo is preserved
         await new Promise<void>((resolve) => {

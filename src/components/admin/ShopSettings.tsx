@@ -586,7 +586,16 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => syncWithCloud(false)}
+              disabled={cloudSyncStatus === 'syncing'}
+              className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${cloudSyncStatus === 'syncing' ? 'animate-spin' : ''}`} />
+              <span>즉시 동기화</span>
+            </button>
             <button
               type="button"
               onClick={handleTestConnection}

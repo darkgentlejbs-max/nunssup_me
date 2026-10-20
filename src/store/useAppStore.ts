@@ -115,13 +115,47 @@ const STORAGE_KEYS = {
   CUSTOMERS: 'nunssup_me_customers_v1',
   APPOINTMENTS: 'nunssup_me_appointments_v1',
   TIMEBLOCKS: 'nunssup_me_timeblocks_v1',
+  PENDING_PUSH: 'nunssup_me_pending_push_v1',
+};
+
+const safeSetItem = (key: string, value: string) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    console.warn(`LocalStorage write warning (${key}):`, e);
+  }
+};
+
+// Merge helper to preserve local offline additions/edits alongside cloud records
+const mergeById = <T extends { id: string }>(cloudList: T[], localList: T[]): T[] => {
+  const map = new Map<string, T>();
+  for (const item of cloudList) {
+    if (item && item.id) map.set(item.id, item);
+  }
+  for (const item of localList) {
+    if (item && item.id) {
+      const existing = map.get(item.id) as any;
+      if (existing && Array.isArray(existing.history) && Array.isArray((item as any).history)) {
+        // Deep-merge customer treatment history so no treatment records/photos are lost
+        const mergedHistory = mergeById(existing.history, (item as any).history);
+        map.set(item.id, { ...existing, ...item, history: mergedHistory });
+      } else {
+        map.set(item.id, { ...existing, ...item });
+      }
+    }
+  }
+  return Array.from(map.values());
 };
 
 // Singleton refs for syncing logic
 let isRemoteUpdating = false;
+let isPushing = false;
 let localChangeCounter = 0;
 let lastCloudUpdatedTimestamp = '';
 let hasHydratedFromCloud = false;
+let hasPendingLocalChanges =
+  typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEYS.PENDING_PUSH) === 'true';
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useAppStore = create<AppStore>((set, get) => {
@@ -487,6 +521,9 @@ export const useAppStore = create<AppStore>((set, get) => {
       resetSupabaseClient();
       hasHydratedFromCloud = false;
       get().showToast('Supabase DB 설정 저장', 'Supabase 데이터베이스 설정이 저장되었습니다.', 'success');
+      setTimeout(() => {
+        get().syncWithCloud(false);
+      }, 100);
     },
     cloudSyncStatus: 'idle',
     lastSyncedAt: null,
@@ -497,16 +534,55 @@ export const useAppStore = create<AppStore>((set, get) => {
         hasHydratedFromCloud = true;
         return;
       }
+
+      // Do not interrupt an active push or pending debounce timer during silent polling
+      if (isPushing || (isSilent && syncTimer !== null)) {
+        return;
+      }
+
       try {
         if (!isSilent) set({ cloudSyncStatus: 'syncing' });
+
+        // If already hydrated and we have unsynced local changes from a previous offline state, push first
+        if (hasHydratedFromCloud && hasPendingLocalChanges) {
+          const currentState = get();
+          isPushing = true;
+          try {
+            const nowIso = new Date().toISOString();
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { adminPin: _pin, ...safeShopConfig } = currentState.shopConfig as any;
+            const payload: SyncPayload = {
+              shopConfig: safeShopConfig,
+              services: currentState.services,
+              customers: currentState.customers,
+              appointments: currentState.appointments,
+              timeBlocks: currentState.timeBlocks,
+              updatedAt: nowIso,
+            };
+            const pushRes = await pushDataToCloud(payload, cloudConfig.storeChannelId);
+            if (pushRes.success) {
+              lastCloudUpdatedTimestamp = nowIso;
+              hasPendingLocalChanges = false;
+              safeSetItem(STORAGE_KEYS.PENDING_PUSH, 'false');
+              set({
+                cloudSyncStatus: 'synced',
+                lastSyncedAt: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+              });
+              if (!isSilent) {
+                get().showToast('Supabase 동기화 완료', '미전송된 최신 데이터가 Supabase DB에 반영되었습니다.', 'success');
+              }
+              return;
+            }
+          } finally {
+            isPushing = false;
+          }
+        }
+
         const res = await pullDataFromCloud(cloudConfig.storeChannelId);
         const cloudData = res.data;
 
-        // CRITICAL FIX: only mark as hydrated if pull actually succeeded
-        // (data returned) or if the row simply doesn't exist yet (PGRST116).
-        // If there was a real network error, keep hasHydratedFromCloud = false
-        // so we don't accidentally push stale local data over real cloud data.
         const isRowNotFound = res.error?.includes('PGRST116') || res.error?.includes('not found');
+        const wasHydratedBefore = hasHydratedFromCloud;
         if (!res.error || isRowNotFound) {
           hasHydratedFromCloud = true;
         }
@@ -514,10 +590,8 @@ export const useAppStore = create<AppStore>((set, get) => {
         const updates: Partial<AppStore> = {};
         if (cloudData && cloudData.updatedAt && cloudData.updatedAt !== lastCloudUpdatedTimestamp) {
           lastCloudUpdatedTimestamp = cloudData.updatedAt;
-          isRemoteUpdating = true;
 
           if (cloudData.shopConfig) {
-            // Preserve local adminPin - never overwrite it from cloud data
             updates.shopConfig = { ...cloudData.shopConfig, adminPin: get().shopConfig.adminPin };
             if (!updates.shopConfig!.dayHours || !Array.isArray(updates.shopConfig!.dayHours) || updates.shopConfig!.dayHours.length !== 7) {
               const wd = updates.shopConfig!.weekdayHours || initialShopConfig.weekdayHours;
@@ -533,32 +607,87 @@ export const useAppStore = create<AppStore>((set, get) => {
               ];
             }
           }
-          if (cloudData.services && cloudData.services.length) updates.services = cloudData.services;
-          if (cloudData.customers) updates.customers = cloudData.customers.map((c: any) => ({ ...c, history: c.history ?? [] }));
-          if (cloudData.appointments) updates.appointments = cloudData.appointments;
-          if (cloudData.timeBlocks) updates.timeBlocks = cloudData.timeBlocks;
+
+          const currentLocal = get();
+          const shouldMergeOfflineEdits = !wasHydratedBefore && hasPendingLocalChanges;
+
+          if (cloudData.services && cloudData.services.length) {
+            updates.services = shouldMergeOfflineEdits
+              ? mergeById(cloudData.services, currentLocal.services)
+              : cloudData.services;
+          }
+          if (cloudData.customers) {
+            const normalizedCloudCust = cloudData.customers.map((c: any) => ({ ...c, history: c.history ?? [] }));
+            updates.customers = shouldMergeOfflineEdits
+              ? mergeById(normalizedCloudCust, currentLocal.customers)
+              : normalizedCloudCust;
+          }
+          if (cloudData.appointments) {
+            updates.appointments = shouldMergeOfflineEdits
+              ? mergeById(cloudData.appointments, currentLocal.appointments)
+              : cloudData.appointments;
+          }
+          if (cloudData.timeBlocks) {
+            updates.timeBlocks = shouldMergeOfflineEdits
+              ? mergeById(cloudData.timeBlocks, currentLocal.timeBlocks)
+              : cloudData.timeBlocks;
+          }
 
           updates.lastSyncedAt = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           updates.cloudSyncStatus = 'synced';
-          set(updates);
+
+          // Apply remote state synchronously so subsequent user actions are never blocked
+          isRemoteUpdating = true;
+          try {
+            set(updates);
+          } finally {
+            isRemoteUpdating = false;
+          }
+
+          // If we merged offline local changes on initial hydration, immediately push merged state to cloud
+          if (shouldMergeOfflineEdits) {
+            const mergedState = get();
+            const nowIso = new Date().toISOString();
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { adminPin: _pin, ...safeShopConfig } = mergedState.shopConfig as any;
+            const pushRes = await pushDataToCloud(
+              {
+                shopConfig: safeShopConfig,
+                services: mergedState.services,
+                customers: mergedState.customers,
+                appointments: mergedState.appointments,
+                timeBlocks: mergedState.timeBlocks,
+                updatedAt: nowIso,
+              },
+              cloudConfig.storeChannelId
+            );
+            if (pushRes.success) {
+              lastCloudUpdatedTimestamp = nowIso;
+              hasPendingLocalChanges = false;
+              safeSetItem(STORAGE_KEYS.PENDING_PUSH, 'false');
+            }
+          }
 
           if (!isSilent) {
             get().showToast('Supabase 동기화 완료', '최신 예약 및 고객 데이터가 Supabase DB와 동기화되었습니다.', 'info');
           }
-          setTimeout(() => {
-            isRemoteUpdating = false;
-          }, 1000);
         } else if (!res.error) {
-          set({ cloudSyncStatus: 'synced' });
+          set({
+            cloudSyncStatus: 'synced',
+            lastSyncedAt: get().lastSyncedAt || new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          });
+          if (!isSilent) {
+            get().showToast('Supabase 동기화 확인', '이미 최신 데이터 상태입니다.', 'info');
+          }
         } else {
           set({ cloudSyncStatus: 'offline' });
+          if (!isSilent) {
+            get().showToast('Supabase 연결 확인 필요', res.error || '데이터베이스 연결을 확인해 주세요.', 'warning');
+          }
         }
       } catch (err) {
         console.warn('Supabase sync pull error:', err);
         set({ cloudSyncStatus: 'offline' });
-        // DO NOT set hasHydratedFromCloud = true here.
-        // If the pull fails (offline/network error), we must NOT allow local state
-        // to be pushed to cloud, as it could overwrite real cloud data when reconnected.
       }
     },
 
@@ -594,9 +723,9 @@ export const useAppStore = create<AppStore>((set, get) => {
     clearAllSampleData: () => {
       set({ customers: [], appointments: [], timeBlocks: [] });
       if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify([]));
-        localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify([]));
-        localStorage.setItem(STORAGE_KEYS.TIMEBLOCKS, JSON.stringify([]));
+        safeSetItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify([]));
+        safeSetItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify([]));
+        safeSetItem(STORAGE_KEYS.TIMEBLOCKS, JSON.stringify([]));
       }
 
       const { cloudConfig, shopConfig, services } = get();
@@ -643,12 +772,12 @@ export const useAppStore = create<AppStore>((set, get) => {
 useAppStore.subscribe((state, prevState) => {
   if (typeof window === 'undefined') return;
 
-  // LocalStorage Syncing
-  if (state.shopConfig !== prevState.shopConfig) localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(state.shopConfig));
-  if (state.services !== prevState.services) localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(state.services));
-  if (state.customers !== prevState.customers) localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(state.customers));
-  if (state.appointments !== prevState.appointments) localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(state.appointments));
-  if (state.timeBlocks !== prevState.timeBlocks) localStorage.setItem(STORAGE_KEYS.TIMEBLOCKS, JSON.stringify(state.timeBlocks));
+  // Safe LocalStorage Syncing (never throws QuotaExceededError)
+  if (state.shopConfig !== prevState.shopConfig) safeSetItem(STORAGE_KEYS.CONFIG, JSON.stringify(state.shopConfig));
+  if (state.services !== prevState.services) safeSetItem(STORAGE_KEYS.SERVICES, JSON.stringify(state.services));
+  if (state.customers !== prevState.customers) safeSetItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(state.customers));
+  if (state.appointments !== prevState.appointments) safeSetItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(state.appointments));
+  if (state.timeBlocks !== prevState.timeBlocks) safeSetItem(STORAGE_KEYS.TIMEBLOCKS, JSON.stringify(state.timeBlocks));
 
   // Cloud Sync Push Logic
   const hasDataChanged =
@@ -662,6 +791,12 @@ useAppStore.subscribe((state, prevState) => {
 
   if (hasDataChanged || hasCloudConfigChanged) {
     if (isRemoteUpdating) return;
+
+    if (hasDataChanged) {
+      hasPendingLocalChanges = true;
+      safeSetItem(STORAGE_KEYS.PENDING_PUSH, 'true');
+    }
+
     if (!state.cloudConfig.supabaseUrl || !state.cloudConfig.supabaseAnonKey) return;
     if (!hasHydratedFromCloud) return;
 
@@ -670,26 +805,31 @@ useAppStore.subscribe((state, prevState) => {
 
     if (syncTimer) clearTimeout(syncTimer);
     syncTimer = setTimeout(async () => {
+      syncTimer = null;
       if (currentCounter !== localChangeCounter) return;
+      isPushing = true;
       try {
+        const latestState = useAppStore.getState();
         useAppStore.setState({ cloudSyncStatus: 'syncing' });
         const nowIso = new Date().toISOString();
-        lastCloudUpdatedTimestamp = nowIso;
-        
+
         // Strip adminPin from shopConfig before pushing to cloud for security
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { adminPin: _pin, ...safeShopConfig } = state.shopConfig as any;
+        const { adminPin: _pin, ...safeShopConfig } = latestState.shopConfig as any;
         const payload: SyncPayload = {
           shopConfig: safeShopConfig,
-          services: state.services,
-          customers: state.customers,
-          appointments: state.appointments,
-          timeBlocks: state.timeBlocks,
+          services: latestState.services,
+          customers: latestState.customers,
+          appointments: latestState.appointments,
+          timeBlocks: latestState.timeBlocks,
           updatedAt: nowIso,
         };
-        
-        const result = await pushDataToCloud(payload, state.cloudConfig.storeChannelId);
+
+        const result = await pushDataToCloud(payload, latestState.cloudConfig.storeChannelId);
         if (result.success) {
+          lastCloudUpdatedTimestamp = nowIso;
+          hasPendingLocalChanges = false;
+          safeSetItem(STORAGE_KEYS.PENDING_PUSH, 'false');
           useAppStore.setState({
             cloudSyncStatus: 'synced',
             lastSyncedAt: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
@@ -700,14 +840,16 @@ useAppStore.subscribe((state, prevState) => {
       } catch (e) {
         console.warn('Supabase push error:', e);
         useAppStore.setState({ cloudSyncStatus: 'offline' });
+      } finally {
+        isPushing = false;
       }
-    }, 1000);
+    }, 300);
   }
 });
 
-// Periodic Auto-Sync and Window Focus listener
+// Periodic Auto-Sync, Network Online Recovery, and Window Focus listener
 if (typeof window !== 'undefined') {
-  const initSync = () => {
+  const triggerSilentSync = () => {
     const { cloudConfig, syncWithCloud } = useAppStore.getState();
     if (cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey) {
       syncWithCloud(true);
@@ -715,21 +857,19 @@ if (typeof window !== 'undefined') {
   };
 
   // Initial Sync Call
-  setTimeout(initSync, 100);
+  setTimeout(triggerSilentSync, 50);
 
   setInterval(() => {
     if (!document.hidden) {
-      const { cloudConfig, syncWithCloud } = useAppStore.getState();
-      if (cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey) {
-        syncWithCloud(true);
-      }
+      triggerSilentSync();
     }
   }, 4000);
 
-  window.addEventListener('focus', () => {
-    const { cloudConfig, syncWithCloud } = useAppStore.getState();
-    if (cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey) {
-      syncWithCloud(true);
+  window.addEventListener('focus', triggerSilentSync);
+  window.addEventListener('online', triggerSilentSync);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      triggerSilentSync();
     }
   });
 }
