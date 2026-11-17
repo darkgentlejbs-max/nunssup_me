@@ -1,7 +1,9 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 
 // LocalStorage Keys for Cloud DB Config
 const CLOUD_CONFIG_KEY = 'nunssup_cloud_db_config';
+const LAST_KEEPALIVE_KEY = 'nunssup_last_keepalive_ts';
+const KEEPALIVE_INTERVAL_MS = 1000 * 60 * 60 * 4; // Every 4 hours per device
 
 export interface CloudDbConfig {
   supabaseUrl: string;
@@ -58,6 +60,19 @@ export const saveCloudConfig = (config: CloudDbConfig) => {
   }
 };
 
+// Detect if a network error indicates Supabase Free Tier paused state (DNS NXDOMAIN -> Failed to fetch / Load failed)
+export const isSupabasePausedOrUnreachableError = (errMsg: string): boolean => {
+  const lower = (errMsg || '').toLowerCase();
+  const isBrowserOnline = typeof navigator !== 'undefined' ? navigator.onLine !== false : true;
+  if (lower.includes('paused') || lower.includes('enotfound') || lower.includes('name_not_resolved')) {
+    return true;
+  }
+  if (isBrowserOnline && (lower.includes('failed to fetch') || lower.includes('load failed') || lower.includes('networkerror'))) {
+    return true;
+  }
+  return false;
+};
+
 // Custom fetch wrapper that handles sb_publishable_ keys properly and disables stale browser caching
 const createSupabaseFetch = (apiKey: string): typeof fetch => {
   const cleanKey = apiKey.trim();
@@ -75,30 +90,39 @@ const createSupabaseFetch = (apiKey: string): typeof fetch => {
       headers.set('Authorization', `Bearer ${cleanKey}`);
     }
 
-    const response = await fetch(input, {
-      ...init,
-      headers,
-      cache: 'no-store',
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    if (response.status === 401 && isPublishableKey) {
-      const retryHeaders = new Headers(init?.headers);
-      retryHeaders.set('apikey', cleanKey);
-      retryHeaders.set('Authorization', `Bearer ${cleanKey}`);
-      return fetch(input, {
+    try {
+      const response = await fetch(input, {
         ...init,
-        headers: retryHeaders,
+        headers,
         cache: 'no-store',
+        signal: init?.signal || controller.signal,
       });
-    }
 
-    return response;
+      if (response.status === 401 && isPublishableKey) {
+        const retryHeaders = new Headers(init?.headers);
+        retryHeaders.set('apikey', cleanKey);
+        retryHeaders.set('Authorization', `Bearer ${cleanKey}`);
+        return await fetch(input, {
+          ...init,
+          headers: retryHeaders,
+          cache: 'no-store',
+        });
+      }
+
+      return response;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   };
 };
 
 let supabaseInstance: SupabaseClient | null = null;
 let currentClientUrl = '';
 let currentClientKey = '';
+let activeRealtimeChannel: RealtimeChannel | null = null;
 
 export const getSupabaseClient = (): SupabaseClient | null => {
   const config = getSavedCloudConfig();
@@ -123,6 +147,11 @@ export const getSupabaseClient = (): SupabaseClient | null => {
       global: {
         fetch: createSupabaseFetch(key),
       },
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
     });
     currentClientUrl = url;
     currentClientKey = key;
@@ -134,6 +163,14 @@ export const getSupabaseClient = (): SupabaseClient | null => {
 };
 
 export const resetSupabaseClient = () => {
+  if ( supabaseInstance && activeRealtimeChannel ) {
+    try {
+      supabaseInstance.removeChannel(activeRealtimeChannel);
+    } catch {
+      // ignore
+    }
+    activeRealtimeChannel = null;
+  }
   supabaseInstance = null;
   currentClientUrl = '';
   currentClientKey = '';
@@ -154,7 +191,7 @@ const directRestUpsert = async (
   url: string,
   key: string,
   channelId: string,
-  payload: SyncPayload
+  payload: any
 ): Promise<{ ok: boolean; errorText?: string }> => {
   try {
     const endpoint = `${url.replace(/\/$/, '')}/rest/v1/nunssup_store_data?on_conflict=channel_id`;
@@ -213,6 +250,89 @@ const directRestSelect = async (
   }
 };
 
+// Automatic Keep-Alive Heartbeat: writes a lightweight ping row to prevent Supabase Free Tier 7-day pause
+export const sendKeepAliveHeartbeat = async (force = false): Promise<boolean> => {
+  if (typeof window !== 'undefined' && !force) {
+    const lastPing = Number(localStorage.getItem(LAST_KEEPALIVE_KEY) || '0');
+    if (Date.now() - lastPing < KEEPALIVE_INTERVAL_MS) {
+      return true;
+    }
+  }
+
+  const config = getSavedCloudConfig();
+  const url = (config.supabaseUrl || '').trim();
+  const key = (config.supabaseAnonKey || '').trim();
+  if (!url || !key) return false;
+
+  const nowIso = new Date().toISOString();
+  const res = await directRestUpsert(url, key, 'nunssup_keepalive_ping', {
+    ping: true,
+    updatedAt: nowIso,
+    source: typeof window !== 'undefined' ? 'browser-client' : 'server',
+  });
+
+  if (res.ok && typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(LAST_KEEPALIVE_KEY, String(Date.now()));
+    } catch {
+      // ignore
+    }
+  }
+  return res.ok;
+};
+
+// Subscribe to Supabase Realtime WebSocket changes for instant (<0.1s) cross-device sync
+export const subscribeToRealtimeSync = (onRemoteChange: () => void): (() => void) => {
+  const supabase = getSupabaseClient();
+  const config = getSavedCloudConfig();
+  const cleanChannel = (config.storeChannelId || 'nunssup_me_7721').trim();
+
+  if (!supabase) return () => {};
+
+  if (activeRealtimeChannel) {
+    try {
+      supabase.removeChannel(activeRealtimeChannel);
+    } catch {
+      // ignore
+    }
+    activeRealtimeChannel = null;
+  }
+
+  try {
+    const channel = supabase
+      .channel(`realtime_store_${cleanChannel}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'nunssup_store_data',
+          filter: `channel_id=eq.${cleanChannel}`,
+        },
+        () => {
+          onRemoteChange();
+        }
+      )
+      .subscribe();
+
+    activeRealtimeChannel = channel;
+
+    return () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch {
+        // ignore
+      }
+      if (activeRealtimeChannel === channel) {
+        activeRealtimeChannel = null;
+      }
+    };
+  } catch (e) {
+    console.warn('Realtime subscription setup warning:', e);
+    return () => {};
+  }
+};
+
 // Push local data to Supabase Cloud DB
 export const pushDataToCloud = async (
   payload: SyncPayload,
@@ -247,10 +367,10 @@ export const pushDataToCloud = async (
       }
 
       const errMsg = error.message || fallback.errorText || '';
-      if (errMsg.includes('paused') || errMsg.includes('The project is paused')) {
+      if (isSupabasePausedOrUnreachableError(errMsg)) {
         return {
           success: false,
-          message: '⚠️ Supabase 무료 프로젝트가 미사용으로 인해 [일시 정지(Paused)] 상태입니다. Supabase 대시보드에서 [Restore project]를 눌러 활성화해 주세요.',
+          message: '⚠️ Supabase 무료 DB 프로젝트가 7일간 미사용으로 [일시 정지(Paused)] 상태입니다. Supabase 대시보드(https://supabase.com/dashboard/project/vehvndduipgzjnksbdit)에서 [Restore project] 버튼을 눌러 깨워주시면 즉시 연동됩니다!',
         };
       }
       if (errMsg.includes('relation "nunssup_store_data" does not exist')) {
@@ -268,14 +388,21 @@ export const pushDataToCloud = async (
     if (fallback.ok) {
       return { success: true, message: 'Supabase DB에 정상 저장되었습니다.' };
     }
-    return { success: false, message: `Supabase 연결 예외: ${e.message || e}` };
+    const errMsg = e.message || fallback.errorText || String(e);
+    if (isSupabasePausedOrUnreachableError(errMsg)) {
+      return {
+        success: false,
+        message: '⚠️ Supabase 무료 DB 프로젝트가 [일시 정지(Paused)] 상태입니다. Supabase 대시보드(https://supabase.com/dashboard/project/vehvndduipgzjnksbdit)에서 [Restore project]를 눌러 활성화해 주세요!',
+      };
+    }
+    return { success: false, message: `Supabase 연결 예외: ${errMsg}` };
   }
 };
 
 // Pull latest data from Supabase Cloud DB
 export const pullDataFromCloud = async (
   channelId: string
-): Promise<{ data: SyncPayload | null; error?: string }> => {
+): Promise<{ data: SyncPayload | null; error?: string; isPaused?: boolean }> => {
   const config = getSavedCloudConfig();
   const url = (config.supabaseUrl || '').trim();
   const key = (config.supabaseAnonKey || '').trim();
@@ -298,15 +425,24 @@ export const pullDataFromCloud = async (
       if (data.updated_at && (!payload.updatedAt || data.updated_at > payload.updatedAt)) {
         payload.updatedAt = data.updated_at;
       }
+      // Trigger non-blocking keep-alive heartbeat when pull succeeds
+      sendKeepAliveHeartbeat().catch(() => {});
       return { data: payload };
     }
 
     if (error && error.code !== 'PGRST116') {
-      // Fallback to direct REST GET
-      return await directRestSelect(url, key, cleanChannel);
+      const fallback = await directRestSelect(url, key, cleanChannel);
+      if (fallback.error && isSupabasePausedOrUnreachableError(fallback.error)) {
+        return { ...fallback, isPaused: true };
+      }
+      return fallback;
     }
   } catch {
-    return await directRestSelect(url, key, cleanChannel);
+    const fallback = await directRestSelect(url, key, cleanChannel);
+    if (fallback.error && isSupabasePausedOrUnreachableError(fallback.error)) {
+      return { ...fallback, isPaused: true };
+    }
+    return fallback;
   }
 
   return { data: null };
@@ -356,37 +492,40 @@ export const testCloudConnection = async (
       // Try direct REST select as verification
       const directRes = await directRestSelect(url, key, channel);
       if (!directRes.error) {
+        await sendKeepAliveHeartbeat(true).catch(() => {});
         return {
           success: true,
-          message: `Supabase 데이터베이스 연결 성공! 🎉 채널 [${channel}]을 통해 PC ↔ 스마트폰 실시간 연동이 활성화되었습니다.`,
+          message: `Supabase 데이터베이스 연결 성공! 🎉 채널 [${channel}]을 통해 PC ↔ 스마트폰 실시간 연동 및 자동 깨우기(Keep-Alive)가 활성화되었습니다.`,
         };
       }
 
-      if (error.message.includes('paused') || error.message.includes('The project is paused')) {
+      const errMsg = error.message || directRes.error || '';
+      if (isSupabasePausedOrUnreachableError(errMsg)) {
         return {
           success: false,
-          message: '⚠️ Supabase 무료 프로젝트가 7일간 미접속으로 인해 [일시 정지(Paused)]되었습니다! Supabase 대시보드(https://supabase.com/dashboard/project/vehvndduipgzjnksbdit)에 접속하셔서 [Restore project] 버튼을 누르시면 1~2분 내로 정상 복원됩니다.',
+          message: '⚠️ 현재 Supabase 무료 프로젝트가 7일간 미접속으로 인해 [일시 정지(Paused)] 상태입니다! 아래 [⚡ Supabase 1-클릭 복원하러 가기] 버튼을 눌러 대시보드에서 [Restore project]를 클릭하시면 1~2분 내로 즉시 복원됩니다.',
         };
       }
-      if (error.message.includes('relation "nunssup_store_data" does not exist') || error.code === '42P01') {
+      if (errMsg.includes('relation "nunssup_store_data" does not exist') || error.code === '42P01') {
         return {
           success: false,
           message: 'Supabase 프로젝트는 연결되었으나 nunssup_store_data 테이블이 없습니다. 아래 [1-클릭 SQL 복사] 버튼을 눌러 Supabase SQL Editor에서 실행(Run)해 주세요!',
         };
       }
-      return { success: false, message: `Supabase 오류: ${error.message}` };
+      return { success: false, message: `Supabase 오류: ${errMsg}` };
     }
 
+    await sendKeepAliveHeartbeat(true).catch(() => {});
     return {
       success: true,
-      message: `Supabase 데이터베이스 연결 성공! 🎉 채널 [${channel}]을 통해 PC ↔ 스마트폰 실시간 연동이 활성화되었습니다.`,
+      message: `Supabase 데이터베이스 연결 성공! 🎉 채널 [${channel}]을 통해 PC ↔ 스마트폰 실시간 연동 및 자동 깨우기(Keep-Alive)가 활성화되었습니다.`,
     };
   } catch (e: any) {
     const msg = e.message || String(e);
-    if (msg.includes('paused') || msg.includes('The project is paused')) {
+    if (isSupabasePausedOrUnreachableError(msg)) {
       return {
         success: false,
-        message: '⚠️ Supabase 무료 프로젝트가 7일간 미접속으로 인해 [일시 정지(Paused)]되었습니다! Supabase 대시보드(https://supabase.com/dashboard/project/vehvndduipgzjnksbdit)에서 [Restore project]를 눌러주세요.',
+        message: '⚠️ 현재 Supabase 무료 프로젝트가 7일간 미접속으로 인해 [일시 정지(Paused)] 상태입니다! 아래 [⚡ Supabase 1-클릭 복원하러 가기] 버튼을 눌러 대시보드에서 [Restore project]를 클릭해 주세요.',
       };
     }
     return { success: false, message: `연결 실패: ${msg}` };

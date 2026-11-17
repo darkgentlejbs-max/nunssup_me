@@ -28,6 +28,8 @@ import {
   pullDataFromCloud,
   SyncPayload,
   resetSupabaseClient,
+  subscribeToRealtimeSync,
+  sendKeepAliveHeartbeat,
 } from '../services/cloudSync';
 
 export interface ToastMessage {
@@ -194,19 +196,49 @@ export const useAppStore = create<AppStore>((set, get) => {
   const getInitialServices = (): ServiceItem[] => {
     if (typeof window === 'undefined') return initialServices;
     const saved = localStorage.getItem(STORAGE_KEYS.SERVICES);
-    return saved ? JSON.parse(saved) : initialServices;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return mergeById(initialServices, parsed);
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return initialServices;
   };
 
   const getInitialCustomers = (): Customer[] => {
     if (typeof window === 'undefined') return initialCustomers;
     const saved = localStorage.getItem(STORAGE_KEYS.CUSTOMERS);
-    return saved ? JSON.parse(saved) : initialCustomers;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return mergeById(initialCustomers, parsed);
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return initialCustomers;
   };
 
   const getInitialAppointments = (): Appointment[] => {
     if (typeof window === 'undefined') return initialAppointments;
     const saved = localStorage.getItem(STORAGE_KEYS.APPOINTMENTS);
-    return saved ? JSON.parse(saved) : initialAppointments;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return mergeById(initialAppointments, parsed);
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return initialAppointments;
   };
 
   const getInitialTimeBlocks = (): TimeBlock[] => {
@@ -847,7 +879,7 @@ useAppStore.subscribe((state, prevState) => {
   }
 });
 
-// Periodic Auto-Sync, Network Online Recovery, and Window Focus listener
+// Periodic Auto-Sync, Realtime WebSocket, Keep-Alive Heartbeat, and Window Focus listener
 if (typeof window !== 'undefined') {
   const triggerSilentSync = () => {
     const { cloudConfig, syncWithCloud } = useAppStore.getState();
@@ -856,17 +888,34 @@ if (typeof window !== 'undefined') {
     }
   };
 
-  // Initial Sync Call
-  setTimeout(triggerSilentSync, 50);
+  // Initial Sync & Realtime WebSocket Setup
+  setTimeout(() => {
+    triggerSilentSync();
+    subscribeToRealtimeSync(() => {
+      triggerSilentSync();
+    });
+    sendKeepAliveHeartbeat().catch(() => {});
+  }, 50);
 
+  // Fast 3-second polling when visible
   setInterval(() => {
     if (!document.hidden) {
       triggerSilentSync();
     }
-  }, 4000);
+  }, 3000);
+
+  // Periodic keep-alive ping every 30 minutes while app stays open
+  setInterval(() => {
+    sendKeepAliveHeartbeat().catch(() => {});
+  }, 1000 * 60 * 30);
 
   window.addEventListener('focus', triggerSilentSync);
-  window.addEventListener('online', triggerSilentSync);
+  window.addEventListener('online', () => {
+    triggerSilentSync();
+    subscribeToRealtimeSync(() => {
+      triggerSilentSync();
+    });
+  });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       triggerSilentSync();

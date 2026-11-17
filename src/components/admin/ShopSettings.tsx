@@ -618,14 +618,24 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
         {/* Sync Status Banner */}
         <div className={`rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs border ${
           cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey
-            ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950'
+            ? cloudSyncStatus === 'offline'
+              ? 'bg-rose-50/90 border-rose-300 text-rose-950'
+              : 'bg-emerald-50/80 border-emerald-300 text-emerald-950'
             : 'bg-amber-50/80 border-amber-300 text-amber-950'
         }`}>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl text-white flex items-center justify-center flex-shrink-0 shadow ${
-              cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey ? 'bg-emerald-700' : 'bg-amber-600'
+              cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey
+                ? cloudSyncStatus === 'offline'
+                  ? 'bg-rose-600'
+                  : 'bg-emerald-700'
+                : 'bg-amber-600'
             }`}>
-              {cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+              {cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey && cloudSyncStatus !== 'offline' ? (
+                <CheckCircle2 className="w-5 h-5" />
+              ) : (
+                <AlertTriangle className="w-5 h-5" />
+              )}
             </div>
             <div>
               <p className="font-bold text-sm">
@@ -633,8 +643,8 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
                   ? cloudSyncStatus === 'syncing'
                     ? '⚡ 실시간 데이터 동기화 중...'
                     : cloudSyncStatus === 'offline'
-                    ? '🔴 DB 연결 끊김 (프로젝트 일시정지 또는 오프라인)'
-                    : '🟢 Supabase 클라우드 실시간 동기화 활성'
+                    ? '🔴 Supabase 무료 프로젝트 일시정지(Paused) — 대시보드에서 [Restore project]를 눌러주세요!'
+                    : '🟢 Supabase 클라우드 실시간 동기화 & 자동 깨우기(Keep-Alive) 활성'
                   : '⚠️ Supabase URL과 Key를 입력하여 클라우드 DB를 연결해 주세요.'}
               </p>
               <p className="text-[11px] opacity-80 mt-0.5">
@@ -643,17 +653,33 @@ CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = '
             </div>
           </div>
 
-          <span className={`text-[11px] font-bold px-3 py-1 rounded-full font-mono border ${
-            cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey
-              ? 'bg-emerald-200/80 border-emerald-300 text-emerald-900'
-              : 'bg-amber-200/80 border-amber-300 text-amber-900'
-          }`}>
-            {cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey
-              ? cloudSyncStatus === 'offline'
-                ? '연결 끊김 / 복원 필요'
-                : 'PC ↔ 스마트폰 자동 연결됨'
-              : '설정 필요'}
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {cloudSyncStatus === 'offline' && (
+              <a
+                href="https://supabase.com/dashboard/project/vehvndduipgzjnksbdit"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow flex items-center gap-1.5 transition-all"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>⚡ Supabase 1-클릭 복원하러 가기</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+            <span className={`text-[11px] font-bold px-3 py-1 rounded-full font-mono border ${
+              cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey
+                ? cloudSyncStatus === 'offline'
+                  ? 'bg-rose-200/80 border-rose-300 text-rose-900'
+                  : 'bg-emerald-200/80 border-emerald-300 text-emerald-900'
+                : 'bg-amber-200/80 border-amber-300 text-amber-900'
+            }`}>
+              {cloudConfig.supabaseUrl && cloudConfig.supabaseAnonKey
+                ? cloudSyncStatus === 'offline'
+                  ? '일시정지 / 복원 필요'
+                  : '24시간 끊김방지 가동 중'
+                : '설정 필요'}
+            </span>
+          </div>
         </div>
 
         {/* Credentials Form */}
